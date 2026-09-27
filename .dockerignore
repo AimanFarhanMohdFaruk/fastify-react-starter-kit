@@ -1,0 +1,13 @@
+node_modules
+build
+.git
+.env
+.env.*
+!.env.example
+!.env.production.example
+*.log
+.data
+.DS_Store
+README.md
+docker-compose.yml
+docker-compose.prod.yml

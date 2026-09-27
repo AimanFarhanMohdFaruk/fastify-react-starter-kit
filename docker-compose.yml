@@ -1,0 +1,24 @@
+services:
+  postgres:
+    # Official Postgres 18 with pgvector preinstalled.
+    # Stock postgres images do not ship the vector extension.
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: kit
+      POSTGRES_PASSWORD: kit
+      POSTGRES_DB: starter_kit
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - kit_pg_data:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kit -d starter_kit']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  kit_pg_data:
