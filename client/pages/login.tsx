@@ -1,4 +1,4 @@
-import { useForm, Link } from '@inertiajs/react'
+import { Link } from 'react-router'
 import { useState } from 'react'
 
 import { Container } from '@/components/layout'
@@ -11,12 +11,19 @@ import { Separator } from '@/components/ui/separator'
 
 import { authClient } from '../lib/auth-client'
 
-type Props = { error: string | null }
+export { getData } from './login.getData.ts?server'
 
-export default function Login({ error: serverError }: Props) {
-  const form = useForm({ email: '', password: '', name: '' })
-  const magic = useForm({ email: '' })
-  const [error, setError] = useState(serverError)
+export function getMeta() {
+  return { title: 'Sign in' }
+}
+
+export default function Login() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [magicEmail, setMagicEmail] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   return (
     <Main className="my-0 py-12">
@@ -39,10 +46,12 @@ export default function Login({ error: serverError }: Props) {
           className="space-y-4"
           onSubmit={async (e) => {
             e.preventDefault()
+            setBusy(true)
             const { error: err } = await authClient.signIn.email({
-              email: form.data.email,
-              password: form.data.password,
+              email,
+              password,
             })
+            setBusy(false)
             if (err) {
               setError(err.message ?? 'Login failed')
               return
@@ -54,8 +63,8 @@ export default function Login({ error: serverError }: Props) {
             <FieldLabel>Email</FieldLabel>
             <Input
               type="email"
-              value={form.data.email}
-              onChange={(e) => form.setData('email', e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </Field>
@@ -63,22 +72,27 @@ export default function Login({ error: serverError }: Props) {
             <FieldLabel>Password</FieldLabel>
             <Input
               type="password"
-              value={form.data.password}
-              onChange={(e) => form.setData('password', e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </Field>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit">Log in</Button>
+            <Button type="submit" disabled={busy} loading={busy}>
+              Log in
+            </Button>
             <Button
               type="button"
               variant="outline"
+              disabled={busy}
               onClick={async () => {
+                setBusy(true)
                 const { error: err } = await authClient.signUp.email({
-                  email: form.data.email,
-                  password: form.data.password,
-                  name: form.data.name || form.data.email.split('@')[0],
+                  email,
+                  password,
+                  name: name || email.split('@')[0],
                 })
+                setBusy(false)
                 if (err) {
                   setError(err.message ?? 'Register failed')
                   return
@@ -97,10 +111,12 @@ export default function Login({ error: serverError }: Props) {
           className="space-y-4"
           onSubmit={async (e) => {
             e.preventDefault()
+            setBusy(true)
             const { error: err } = await authClient.signIn.magicLink({
-              email: magic.data.email,
+              email: magicEmail,
               callbackURL: '/dashboard',
             })
+            setBusy(false)
             if (err) {
               setError(err.message ?? 'Magic link failed')
               return
@@ -114,17 +130,17 @@ export default function Login({ error: serverError }: Props) {
             <FieldLabel>Email</FieldLabel>
             <Input
               type="email"
-              value={magic.data.email}
-              onChange={(e) => magic.setData('email', e.target.value)}
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
               required
             />
           </Field>
-          <Button type="submit" variant="secondary">
+          <Button type="submit" variant="secondary" disabled={busy}>
             Email me a link
           </Button>
         </form>
 
-        <Button variant="link" render={<Link href="/" />}>
+        <Button variant="link" render={<Link to="/" />}>
           Home
         </Button>
       </Container>

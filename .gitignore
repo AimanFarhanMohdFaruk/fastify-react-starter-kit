@@ -1,5 +1,7 @@
 node_modules/
 build/
+client/dist/
+dist/
 .data/
 .env
 .env.production

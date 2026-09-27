@@ -36,12 +36,6 @@ function fromFastifyHeaders(req: FastifyRequest) {
 }
 
 export async function registerAuthRoutes(app: FastifyInstance) {
-  app.get('/login', async (req, reply) => {
-    const user = await getSessionUser(req)
-    if (user) return reply.redirect('/dashboard')
-    return reply.inertia.render('Login', { error: null as string | null })
-  })
-
   app.route({
     method: ['GET', 'POST'],
     url: '/api/auth/*',

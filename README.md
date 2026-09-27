@@ -2,7 +2,7 @@
 
 Implements [STACK.md](../STACK.md) and [architecture-conventions.md](../docs/personal-starter-kit-stack/architecture-conventions.md).
 
-**Stack:** Fastify · Inertia React SSR · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** (Docker)
+**Stack:** Fastify · `@fastify/react` · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** (Docker)
 
 ## Agents
 
@@ -11,27 +11,27 @@ Implements [STACK.md](../STACK.md) and [architecture-conventions.md](../docs/per
 ## Layout
 
 ```
-cmd/web          # Fastify + Inertia
+cmd/web          # Fastify + /api + @fastify/vite
 cmd/worker       # pg-boss consumer
 app/models       # domain + Drizzle / Better Auth
 app/services     # cross-model (enqueue)
-app/controllers  # thin HTTP
+app/controllers  # thin /api HTTP
 app/jobs         # thin worker adapters
 db/migrate       # SQL
 docker/init      # first-boot SQL (CREATE EXTENSION vector)
-web/pages        # Inertia pages
-web/components   # design system (ui / layout / shell / motion / screen)
-web/styles       # Tailwind v4 + tweakcn theme (globals.css)
+client/pages     # @fastify/react route modules (getData + UI)
+client/components # design system (ui / layout / shell / motion / screen)
+client/styles    # Tailwind v4 + tweakcn theme (globals.css)
 ```
 
 ### Design system
 
 Same approach as `payload-better-auth-starter`:
 
-- **Tailwind CSS v4** via `@tailwindcss/vite`, tokens from **tweakcn** in `web/styles/globals.css`
-- **shadcn/coss-style** primitives under `web/components/ui` (`@base-ui/react` + CVA)
+- **Tailwind CSS v4** via `@tailwindcss/vite`, tokens from **tweakcn** in `client/styles/globals.css`
+- **shadcn/coss-style** primitives under `client/components/ui` (`@base-ui/react` + CVA)
 - Folders: `ui`, `layout`, `shell`, `motion-primitives`, `core`, `screen` (+ `icons.tsx`)
-- `components.json` for adding more shadcn components; import alias `@/*` → `web/*`
+- `components.json` for adding more shadcn components; import alias `@/*` → `client/*`
 
 ## Setup
 
@@ -76,7 +76,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production down
 | Service    | Role                                      |
 | ---------- | ----------------------------------------- |
 | **nginx**  | Reverse proxy on port 80 (override with `HOST_PORT`) |
-| **web**    | Fastify + Inertia SSR (migrates on boot)  |
+| **web**    | Fastify + `@fastify/react` (migrates on boot)  |
 | **worker** | pg-boss consumer                          |
 
 TLS: terminate at your cloud load balancer / Caddy in front of this compose, or extend `docker/nginx/` later. Not a fit for Vercel-style serverless.
@@ -111,4 +111,4 @@ NODE_ENV=production npm run start:worker
 ## Notes
 
 - Magic links print to the **web** process console in development.
-- Inertia plugin: `alex-fastify-inertiajs` with `ssrEnabled: true` (Vite middleware in dev; `build/` + `@fastify/static` in production).
+- Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*` and `/api/jobs`. Job list live-updates by polling `GET /api/jobs`.

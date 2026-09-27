@@ -1,14 +1,27 @@
-import { Link } from "@inertiajs/react";
+import { Link } from 'react-router'
+import { useRouteContext } from '@fastify/react/client'
 
-import { Container, Section } from "@/components/layout";
-import { ThemeSelector } from "@/components/shell/theme-switch";
-import { Main } from "@/components/shell/main";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Container, Section } from '@/components/layout'
+import { ThemeSelector } from '@/components/shell/theme-switch'
+import { Main } from '@/components/shell/main'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
-type Props = { title: string; email: string | null };
+type HomeData = {
+  title: string
+  email: string | null
+}
 
-export default function Home({ title, email }: Props) {
+export { getData } from './index.getData.ts?server'
+
+export function getMeta() {
+  return { title: 'Personal starter-kit' }
+}
+
+export default function Home() {
+  const { data } = useRouteContext() as { data: HomeData }
+  const { title, email } = data
+
   return (
     <Main className="my-0 py-12">
       <Container className="space-y-8">
@@ -19,7 +32,7 @@ export default function Home({ title, email }: Props) {
 
         <Section spacing="none">
           <Section.Header>
-            <Section.Eyebrow>Fastify · Inertia · Drizzle</Section.Eyebrow>
+            <Section.Eyebrow>Fastify · @fastify/react · Drizzle</Section.Eyebrow>
             <Section.Title>{title}</Section.Title>
             <Section.Description>
               Rails-shaped monolith: models own domain, UI stays
@@ -30,17 +43,17 @@ export default function Home({ title, email }: Props) {
             {email ? (
               <>
                 <p className="w-full text-muted-foreground text-sm">
-                  Signed in as{" "}
+                  Signed in as{' '}
                   <span className="font-medium text-foreground">{email}</span>
                 </p>
-                <Button render={<Link href="/dashboard" />}>Dashboard</Button>
+                <Button render={<Link to="/dashboard" />}>Dashboard</Button>
               </>
             ) : (
-              <Button render={<Link href="/login" />}>Sign in</Button>
+              <Button render={<Link to="/login" />}>Sign in</Button>
             )}
           </Section.Content>
         </Section>
       </Container>
     </Main>
-  );
+  )
 }

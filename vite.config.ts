@@ -1,25 +1,16 @@
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import viteReact from '@vitejs/plugin-react'
+import fastifyReact from '@fastify/react/plugin'
+import viteFastify from '@fastify/vite/plugin'
 import tailwindcss from '@tailwindcss/vite'
-import path from 'node:path'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  root: '.',
+  root: resolve(import.meta.dirname, 'client'),
+  plugins: [viteReact(), fastifyReact(), viteFastify(), tailwindcss()],
   resolve: {
     alias: {
-      '@': path.resolve('web'),
+      '@': resolve(import.meta.dirname, 'client'),
     },
   },
-  build: {
-    outDir: 'build/client',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: path.resolve('index.html'),
-    },
-  },
-  server: {
-    middlewareMode: true,
-  },
-  appType: 'custom',
 })

@@ -1,12 +1,13 @@
 # Frontend patterns
 
-Inertia + React SSR. UI stays presentation-only; domain lives in `app/`.
+`@fastify/react` + React SSR. UI stays presentation-only; domain lives in `app/`.
 
 ## Delivery
 
-- Pages are **Inertia** components under `web/pages/` — server props in, visits/forms out.
-- SSR is on by default (`web/ssr.tsx`, `alex-fastify-inertiajs`).
-- Alias: `@/*` → `web/*` (components, hooks, lib, styles).
+- Pages are route modules under `client/pages/` — `getData` for SSR props, default export for UI.
+- HTML GETs are owned by `@fastify/vite` + `@fastify/react`; mutations and auth stay on Fastify under `/api/*`.
+- Alias: `@/*` → `client/*` (components, hooks, lib, styles).
+- Layout/providers: `client/layouts/default.jsx` wraps ThemeProvider/Toast.
 
 ## Component folders
 
@@ -20,25 +21,21 @@ Inertia + React SSR. UI stays presentation-only; domain lives in `app/`.
 | `components/core` | Shared non-primitive helpers (images, etc.) |
 | `components/icons.tsx` | App icons |
 
-Theme tokens live in `web/styles/globals.css` (tweakcn). Prefer token classes (`bg-background`, `text-muted-foreground`) over one-off colors.
+Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes (`bg-background`, `text-muted-foreground`) over one-off colors.
 
 ## Pages
 
-- Default export; props typed from what the controller renders.
+- Default export; read `getData` results via `useRouteContext().data`.
+- `getData` may call models/session helpers via **`*.getData.ts?server`** re-exports (keeps Node deps out of the client bundle).
 - Compose with `layout` + `ui` + `shell` — avoid raw HTML + inline style objects for new UI.
 - Local UI state only (open/closed, input drafts). **No** business filter/sort of collections in the client — ask the server.
-- Mutations: `useForm` / `router.post` / `router.get` against controller routes. Auth client is fine for Better Auth endpoints.
+- Mutations: `fetch` against `/api/*` controllers. Auth client is fine for Better Auth endpoints.
+- Navigation: `react-router` `Link` (`to=…`), not Inertia.
 
 ## Feedback without full navigation
 
-- Prefer **server-driven** updates: reload props (`router.get` / partial `only: [...]`) rather than inventing a parallel JSON API for the same page.
-- Inertia `usePoll` / `reload` always hits **`window.location`** — keep the browser on a real GET route (PRG after POST), or poll an explicit URL with `router.get('/dashboard', …)`.
+- For live widgets (job list), prefer **JSON API + local state**: `POST /api/…` then poll `GET /api/…` and `setState`. Avoid full page reloads so scroll stays put.
 - Stop polling when no work is in flight (e.g. no `queued`/`running` jobs).
-
-## Forms & redirects
-
-- After POST, controllers should **redirect** to a GET page so URL and poll targets stay aligned.
-- Flash messages: short-lived props (query flash keys today); clear naturally on next plain GET.
 
 ## Design-system adds
 
@@ -49,6 +46,6 @@ Theme tokens live in `web/styles/globals.css` (tweakcn). Prefer token classes (`
 
 | May | Must not |
 |-----|----------|
-| Render props; local UI state; Inertia visits | Domain rules; meaningful client-side business filter/sort |
-| Call Better Auth client for auth flows | Import `app/models` or talk to the DB |
+| Render route data; local UI state; `/api` fetch | Domain rules; meaningful client-side business filter/sort |
+| Call Better Auth client for auth flows | Import `app/models` from client components (only inside `getData`) |
 | Presentational hooks (`useMediaQuery`, theme) | Encode job/workflow logic in React |
