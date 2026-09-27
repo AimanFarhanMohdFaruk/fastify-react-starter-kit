@@ -15,7 +15,7 @@ type HomeData = {
 export { getData } from './index.getData.ts?server'
 
 export function getMeta() {
-  return { title: 'Personal starter-kit' }
+  return { title: 'Fastify React starter' }
 }
 
 export default function Home() {
@@ -26,7 +26,7 @@ export default function Home() {
     <Main className="my-0 py-12">
       <Container className="space-y-8">
         <div className="flex items-center justify-between gap-4">
-          <Badge variant="secondary">personal-starter-kit</Badge>
+          <Badge variant="secondary">fastify-react-starter</Badge>
           <ThemeSelector />
         </div>
 

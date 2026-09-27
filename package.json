@@ -1,9 +1,9 @@
 {
-  "name": "personal-starter-kit",
+  "name": "fastify-react-starter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Personal starter-kit — Fastify + @fastify/react + Drizzle + Better Auth + pg-boss",
+  "description": "Fastify React starter — Fastify + @fastify/react + Drizzle + Better Auth + pg-boss",
   "scripts": {
     "dev": "tsx cmd/web/main.ts",
     "worker": "tsx cmd/worker/main.ts",

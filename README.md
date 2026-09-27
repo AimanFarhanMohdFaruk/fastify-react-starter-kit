@@ -1,4 +1,4 @@
-# Personal starter-kit
+# Fastify React starter
 
 Implements [STACK.md](../STACK.md) and [architecture-conventions.md](../docs/personal-starter-kit-stack/architecture-conventions.md).
 
