@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { magicLink, testUtils } from 'better-auth/plugins'
+import { admin, magicLink, testUtils } from 'better-auth/plugins'
 import { db } from '../../app/db'
 import * as schema from '../../app/models/schema'
 import { TEST_APP_URL, TEST_AUTH_SECRET } from './db'
@@ -23,6 +23,10 @@ export const testAuth = betterAuth({
   baseURL: TEST_APP_URL,
   emailAndPassword: { enabled: true },
   plugins: [
+    admin({
+      defaultRole: 'user',
+      adminRoles: ['admin'],
+    }),
     magicLink({
       sendMagicLink: async () => {},
     }),

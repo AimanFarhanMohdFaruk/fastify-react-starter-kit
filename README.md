@@ -71,6 +71,12 @@ npm run dev            # http://localhost:3000
 npm run worker         # other terminal
 ```
 
+Promote an Admin after migrate:
+
+1. Sign up at `/login`
+2. `npm run admin:promote -- you@example.com`
+3. Sign in, open `/admin` (redirects to `/admin/users`)
+
 Stop DB: `npm run db:down`
 
 ## Database

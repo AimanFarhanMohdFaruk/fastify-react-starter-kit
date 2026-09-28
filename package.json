@@ -12,6 +12,7 @@
     "db:logs": "docker compose logs -f postgres",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
+    "admin:promote": "tsx scripts/promote-admin.ts",
     "build": "vite build",
     "start": "NODE_ENV=production tsx cmd/web/main.ts",
     "start:worker": "NODE_ENV=production tsx cmd/worker/main.ts",

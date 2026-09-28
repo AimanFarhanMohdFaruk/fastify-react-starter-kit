@@ -1,5 +1,6 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { auth } from '../models/auth'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { auth, type SessionUser } from '../models/auth'
+import { isAdmin } from '../models/admin'
 
 /** Convert Fastify request to Fetch API Request for Better Auth. */
 export async function toAuthRequest(req: FastifyRequest) {
@@ -23,6 +24,28 @@ export async function toAuthRequest(req: FastifyRequest) {
 export async function getSessionUser(req: FastifyRequest) {
   const session = await auth.api.getSession({ headers: fromFastifyHeaders(req) })
   return session?.user ?? null
+}
+
+export type AdminGate =
+  | { ok: true; user: SessionUser }
+  | { ok: false; kind: 'redirect' }
+  | { ok: false; kind: 'forbidden' }
+
+/** SSR gate for `/admin/**` getData — model owns isAdmin. */
+export async function gateAdminPage(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<AdminGate> {
+  const user = await getSessionUser(req)
+  if (!user) {
+    reply.redirect('/login')
+    return { ok: false, kind: 'redirect' }
+  }
+  if (!isAdmin(user)) {
+    reply.code(403)
+    return { ok: false, kind: 'forbidden' }
+  }
+  return { ok: true, user }
 }
 
 function fromFastifyHeaders(req: FastifyRequest) {

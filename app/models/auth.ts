@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { magicLink } from 'better-auth/plugins'
+import { admin, magicLink } from 'better-auth/plugins'
 import { db } from '../db'
 import * as schema from './schema'
 
@@ -20,6 +20,10 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
+    admin({
+      defaultRole: 'user',
+      adminRoles: ['admin'],
+    }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         // Dev transport — swap for a real provider later (STACK.md fog)
