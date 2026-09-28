@@ -5,7 +5,7 @@ Primary sources: [Playwright webServer](https://playwright.dev/docs/test-webserv
 ## Recommendation
 
 - Separate lane: **`npm run test:e2e`** → `playwright test` (not under `node --test`).
-- Config: `playwright.config.ts` at repo root; specs under `e2e/`.
+- Config: `playwright.config.ts` at repo root; specs under `test/e2e/`.
 - `webServer` starts the kit’s production-like web (`npm run build` once in CI, then `npm start`) with **test DB env injected in `webServer.env`**, never relying on developer `.env` `DATABASE_URL`.
 - Auth: Prefer Better Auth **`getCookies` + `addCookies`** (or a setup project that writes `storageState`) over clicking magic-link email in v1.
 - Chromium-only locally/CI for lean defaults.
@@ -14,7 +14,7 @@ Primary sources: [Playwright webServer](https://playwright.dev/docs/test-webserv
 
 ```
 playwright.config.ts
-e2e/
+test/e2e/
   smoke.spec.ts
   auth.setup.ts          # optional: write storageState
 playwright/.auth/        # gitignored storageState output

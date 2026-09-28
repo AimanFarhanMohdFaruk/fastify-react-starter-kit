@@ -3,12 +3,12 @@ import { expect, test } from '@playwright/test'
 
 test('authenticated user sees dashboard email', async ({ context, page }) => {
   const { applyTestEnv, databaseUrlFile, truncateAppTables } = await import(
-    '../test/harness/db'
+    '../harness/db'
   )
   applyTestEnv(readFileSync(databaseUrlFile(), 'utf8').trim())
 
   const { createSessionUser, sessionCookiesForPlaywright } = await import(
-    '../test/harness/auth'
+    '../harness/auth'
   )
   await truncateAppTables()
 

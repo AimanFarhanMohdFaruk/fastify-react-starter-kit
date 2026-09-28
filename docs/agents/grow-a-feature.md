@@ -68,7 +68,7 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 
 - New model behavior → `test/models/…`
 - New `/api` route → register in `test/harness/app.ts` + `test/api/…`
-- New user-visible page flow → `e2e/…` only if model/`/api` cannot prove it
+- New user-visible page flow → `test/e2e/…` only if model/`/api` cannot prove it
 
 **Done when:** `npm test` (and `npm run test:e2e` if you added an E2E) passes.
 

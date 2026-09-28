@@ -8,7 +8,7 @@ How to add tests in this kit. Strategy and hard rules: [docs/testing.md](../test
 |---------------------|-----------------|--------|
 | Model invariant, query, status transition | `test/models/<name>.test.ts` | `npm test` |
 | `/api` status codes, JSON shape, auth gate | `test/api/<resource>.test.ts` | `npm test` |
-| User-visible page after SSR / cookies | `e2e/<name>.spec.ts` | `npm run test:e2e` |
+| User-visible page after SSR / cookies | `test/e2e/<name>.spec.ts` | `npm run test:e2e` |
 
 Prefer the highest seam that still proves the behavior: **model → `/api` → E2E**. Do not re-prove domain rules only in Playwright.
 
@@ -85,7 +85,7 @@ describe('/api/…', () => {
 
 ## E2E (Playwright)
 
-1. Apply harness DB URL from `test/.database-url` **before** importing `test/harness/auth` (dynamic import order matters — see `e2e/dashboard.spec.ts`).
+1. Apply harness DB URL from `test/.database-url` **before** importing `test/harness/auth` (dynamic import order matters — see `test/e2e/dashboard.spec.ts`).
 2. `truncateAppTables()` then `createSessionUser` + `sessionCookiesForPlaywright` → `context.addCookies`.
 3. Assert visible UI (`getByText` / roles), not implementation details.
 4. Do **not** start the worker in v1; do **not** set `reuseExistingServer: true` against a developer `npm run dev`.

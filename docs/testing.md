@@ -1,6 +1,6 @@
 # Testing
 
-Lean strategy for this kit. Harness lives under `test/` (Node) and `e2e/` (Playwright); see `npm test` / `npm run test:e2e`.
+Lean strategy for this kit. Harness and Playwright specs live under `test/`; see `npm test` / `npm run test:e2e`.
 
 **Writing tests:** [agents/testing-patterns.md](agents/testing-patterns.md). Seams: [architecture.md](architecture.md). Background: [research/](research/).
 
@@ -56,7 +56,7 @@ SSR `getData` has **no** dedicated harness in v1 — Playwright hits the pages. 
 
 ### Layout and command
 
-- Specs: `e2e/`
+- Specs: `test/e2e/`
 - Config: `playwright.config.ts`
 - Invoke (when wired): `npm run test:e2e` → `playwright test`
 - Default browser: **Chromium only**
