@@ -6,3 +6,9 @@ dist/
 .env
 .env.production
 *.log
+.scratch/
+test/.database-url
+test-results/
+playwright-report/
+playwright/.auth/
+node_modules/playwright-core/.local-browsers/

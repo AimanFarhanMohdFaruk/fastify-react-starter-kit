@@ -113,3 +113,5 @@ Better Auth lives in `app/models/auth` (schema + server instance). The web proce
 | How layers fit together | This file |
 | Add a feature end-to-end | [agents/grow-a-feature.md](agents/grow-a-feature.md) |
 | Pages, screens, `getData`, design system | [agents/frontend-patterns.md](agents/frontend-patterns.md) |
+| Writing tests | [agents/testing-patterns.md](agents/testing-patterns.md) |
+| Test strategy | [testing.md](testing.md) |

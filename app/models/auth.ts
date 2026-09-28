@@ -14,6 +14,8 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL ?? process.env.APP_URL ?? 'http://localhost:3000',
   emailAndPassword: {
     enabled: true,
   },
