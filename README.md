@@ -2,7 +2,7 @@
 
 An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the product), and domain lives in fat models, not in the frontend.
 
-Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself every major.
+Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself.
 
 **Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** (Docker)
 
