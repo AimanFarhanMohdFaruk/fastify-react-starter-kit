@@ -1,15 +1,17 @@
 import 'dotenv/config'
-import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
 
 const url = process.env.DATABASE_URL
 if (!url) throw new Error('DATABASE_URL required')
 
-const dir = dirname(fileURLToPath(import.meta.url))
-const ddl = readFileSync(join(dir, '../db/migrate/0000_init.sql'), 'utf8')
+const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), '../db/migrate')
 const sql = postgres(url, { max: 1 })
-await sql.unsafe(ddl)
+const db = drizzle(sql)
+
+await migrate(db, { migrationsFolder })
 await sql.end()
-console.log('Applied db/migrate/0000_init.sql')
+console.log('Applied migrations from db/migrate')

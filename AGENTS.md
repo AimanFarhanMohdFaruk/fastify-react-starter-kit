@@ -15,4 +15,4 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 | Growing a feature (schema, domain, HTTP, jobs) | [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md) |
 | Frontend / pages / design-system work | [docs/agents/frontend-patterns.md](docs/agents/frontend-patterns.md) |
 
-Stack decision: see repo `STACK.md` (parent of this kit when nested) or this kit’s `README.md`.
+Stack decision and kit approach: [README.md](./README.md).

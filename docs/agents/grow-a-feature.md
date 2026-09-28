@@ -6,11 +6,12 @@ Ordered path for new capability. Complete each step before the next.
 
 Put domain + persistence in `app/models/`.
 
-- Schema / columns → `app/models/schema.ts` (Drizzle) + a migration under `db/migrate/`.
+- Schema / columns → `app/models/schema.ts` (Drizzle).
+- Persist the change → `npm run db:generate` (writes under `db/migrate/` + journal), then `npm run db:migrate` (Drizzle migrator / `__drizzle_migrations`). Do not hand-author one-off SQL in place of generate; the only intentional hand edit in the initial migration is `CREATE EXTENSION vector`.
 - Invariants, queries, status transitions → functions on the model module (e.g. `createX`, `listXForUser`, `runXWork`).
 - Auth tables stay Better Auth–shaped; app domain tables sit beside them in the same schema module.
 
-**Done when:** the feature can be exercised from a model function (or a short script) without HTTP.
+**Done when:** schema + migration are generated, migrate applies cleanly, and the feature can be exercised from a model function (or a short script) without HTTP.
 
 ## 2. Service only if cross-model
 
