@@ -56,9 +56,9 @@ Controller must not:
 
 ## 5. Page last
 
-- Route module → `client/pages/` (`getData` + default component).
+- Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`).
 - Reusable UI → `client/components/` (see [frontend-patterns.md](frontend-patterns.md)).
-- Initial props from `getData` (may call models); live updates via `/api` poll into React state.
+- Initial props from `getData` (dynamic `import('@app/…')` for models/session); live updates via `/api` into React state. Components never import `@app/*`.
 
 **Done when:** the happy path works end-to-end with presentation-only UI.
 

@@ -27,26 +27,46 @@ Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes
 ## Pages
 
 - Default export; read `getData` results via `useRouteContext().data`.
-- Export `getData` in the **same** page file. Call models/session via **dynamic `import()` inside `getData`** so Node/DB deps stay out of the client bundle (do not static-import `app/models` at the top of the page).
+- Optional `getMeta()` — `@fastify/react` head tags (e.g. `{ title: '…' }`), not Fastify.
 - Compose with `layout` + `ui` + `shell` — avoid raw HTML + inline style objects for new UI.
 - Local UI state only (open/closed, input drafts). **No** business filter/sort of collections in the client — ask the server.
-- Mutations: `fetch` against `/api/*` controllers. Auth client is fine for Better Auth endpoints.
-- Navigation: `react-router` `Link` (`to=…`), not Inertia.
+- Navigation: `react-router` `Link` (`to=…`).
 
-## Feedback without full navigation
+## Data fetching
 
-- For live widgets (job list), prefer **JSON API + local state**: `POST /api/…` then poll `GET /api/…` and `setState`. Avoid full page reloads so scroll stays put.
-- Stop polling when no work is in flight (e.g. no `queued`/`running` jobs).
+### Page load (SSR / first paint + client navigations)
+
+`@fastify/react` convention — export `getData` from the **same** route module (`client/pages/…/index.tsx`):
+
+1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
+2. Return value becomes `useRouteContext().data`.
+3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only — keeps Node/DB out of the browser bundle. Do **not** static-import `@app/*` at the top of a page or component.
+4. Auth gates: `ctx.reply.redirect(…)` then `return {}`.
+
+Example shape: dashboard seeds `email` + `jobs` in `getData`; home seeds `title` + `email`.
+
+### Client components / live updates
+
+`client/components/**` and in-page effects **never** import `@app/*`. They talk to Fastify over HTTP:
+
+| Need | How |
+|------|-----|
+| Mutations / polls / refreshes | `fetch('/api/…')` — prefer helpers in `client/lib/api.ts` |
+| Auth UI (sign in/out, magic link) | Better Auth `authClient` → `/api/auth/*` |
+| Initial SSR props | From the parent page’s `getData` via props or `useRouteContext()` — don’t re-fetch unless live |
+
+Kit pattern for widgets (job list): **SSR seed from `getData`**, then `POST /api/…` + poll `GET /api/…` into React state. Stop polling when no work is in flight.
+
+### Boundaries
+
+| May | Must not |
+|-----|----------|
+| `getData` → dynamic `import('@app/…')` | Static `@app` / `app/models` import in components or page top-level |
+| Render route data; local UI state; `/api` fetch | Domain rules; client-side business filter/sort |
+| Better Auth client for auth flows | Encode job/workflow logic in React |
+| Presentational hooks (`useMediaQuery`, theme) | Call Drizzle / pg-boss from `client/` |
 
 ## Design-system adds
 
 - New primitives: match existing `ui/` Base UI + `cn` + CVA patterns; register via `components.json` when using shadcn/coss CLI.
 - Do not introduce a second CSS system or card-heavy layout language for marketing surfaces unless the page’s job requires it.
-
-## Boundaries (reminder)
-
-| May | Must not |
-|-----|----------|
-| Render route data; local UI state; `/api` fetch | Domain rules; meaningful client-side business filter/sort |
-| Call Better Auth client for auth flows | Import `app/models` from client components (only inside `getData`) |
-| Presentational hooks (`useMediaQuery`, theme) | Encode job/workflow logic in React |
