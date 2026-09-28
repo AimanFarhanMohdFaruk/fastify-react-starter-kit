@@ -77,7 +77,7 @@ export function SectionIcon({ className, render, ...props }: SectionIconProps): 
 
 export function SectionEyebrow({ className, render, ...props }: SectionEyebrowProps): ReactElement {
 	const defaultProps = {
-		className: cn('mb-4 font-medium text-primary text-sm', className),
+		className: cn('mb-4 font-medium text-muted-foreground text-sm', className),
 		'data-slot': 'section-eyebrow',
 	}
 
@@ -91,7 +91,7 @@ export function SectionEyebrow({ className, render, ...props }: SectionEyebrowPr
 export function SectionTitle({ className, render, ...props }: SectionTitleProps): ReactElement {
 	const defaultProps = {
 		className: cn(
-			'scroll-m-20 text-3xl font-bold tracking-tight text-foreground/90 sm:text-4xl',
+			'scroll-m-20 font-heading text-3xl font-normal tracking-tight text-foreground sm:text-4xl',
 			className,
 		),
 		'data-slot': 'section-title',

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <style>
+    .mark { fill: #0d0d0d; }
+    @media (prefers-color-scheme: dark) {
+      .mark { fill: #fafafa; }
+    }
+  </style>
+  <path
+    class="mark"
+    d="M16 3.333 17.467 11.2 24.667 7.333 20.8 14.533 28.667 16 20.8 17.467 24.667 24.667 17.467 20.8 16 28.667 14.533 20.8 7.333 24.667 11.2 17.467 3.333 16 11.2 14.533 7.333 7.333 14.533 11.2 16 3.333Z"
+  />
+</svg>

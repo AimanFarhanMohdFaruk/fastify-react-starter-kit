@@ -5,7 +5,7 @@ import { ToastProvider } from '@/components/ui/toast'
 
 export function Providers({ children }: { children: ReactNode }) {
 	return (
-		<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+		<ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
 			<ToastProvider>{children}</ToastProvider>
 		</ThemeProvider>
 	)

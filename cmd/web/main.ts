@@ -12,8 +12,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '../..')
 const isProd = process.env.NODE_ENV === 'production'
 
+const logger = isProd
+  ? true
+  : {
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname',
+        },
+      },
+    }
+
 async function main() {
-  const app = Fastify({ logger: true })
+  const app = Fastify({ logger })
 
   await app.register(cookie)
   await app.register(formbody)
@@ -23,7 +35,7 @@ async function main() {
 
   await app.register(FastifyVite, {
     root,
-    dev: process.env.NODE_ENV !== 'production',
+    dev: !isProd,
     renderer: '@fastify/react',
   })
 
@@ -31,7 +43,6 @@ async function main() {
 
   const port = Number(process.env.PORT ?? 3000)
   await app.listen({ port, host: '0.0.0.0' })
-  console.log(`Web listening on http://localhost:${port}${isProd ? ' (prod)' : ''}`)
 }
 
 main().catch((err) => {

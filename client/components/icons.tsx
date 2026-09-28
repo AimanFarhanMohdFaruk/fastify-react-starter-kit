@@ -1,22 +1,18 @@
 import type { SVGProps } from 'react'
 
-export const AcmeLogoIcon = (props: SVGProps<SVGSVGElement>) => (
+/** Midday-adjacent sunburst mark for the starter wordmark. */
+export const StarterMark = (props: SVGProps<SVGSVGElement>) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		width="24"
 		height="24"
 		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		strokeWidth="2"
-		strokeLinecap="round"
-		strokeLinejoin="round"
+		fill="currentColor"
+		aria-hidden="true"
 		{...props}
 	>
-		<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-		<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-		<path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
-		<path d="M2 7h20" />
-		<path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7" />
+		<path d="M12 2.5 13.1 8.4 18.5 5.5 15.6 10.9 21.5 12 15.6 13.1 18.5 18.5 13.1 15.6 12 21.5 10.9 15.6 5.5 18.5 8.4 13.1 2.5 12 8.4 10.9 5.5 5.5 10.9 8.4 12 2.5Z" />
 	</svg>
 )
+
+export const AcmeLogoIcon = StarterMark

@@ -7,7 +7,10 @@ interface Props extends React.HTMLAttributes<HTMLHeadingElement> {}
 const H1: React.FC<Props> = ({ className, ...props }) => {
 	return (
 		<h1
-			className={cn('scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl', className)}
+			className={cn(
+				'scroll-m-20 font-heading text-4xl font-normal tracking-tight lg:text-5xl',
+				className,
+			)}
 			{...props}
 		/>
 	)
@@ -17,7 +20,7 @@ const H2: React.FC<Props> = ({ className, ...props }) => {
 	return (
 		<h2
 			className={cn(
-				'scroll-m-20 text-3xl font-bold tracking-tight text-foreground/90 sm:text-4xl',
+				'scroll-m-20 font-heading text-3xl font-normal tracking-tight text-foreground sm:text-4xl',
 				className,
 			)}
 			{...props}
