@@ -7,7 +7,7 @@
 - Pages are route modules under `client/pages/` — one folder per URL segment, **`index.tsx`** as the route file (e.g. `pages/login/index.tsx` → `/login`). Home stays `pages/index.tsx` → `/`.
 - Only put route modules under `pages/`; shared UI belongs in `client/components/`.
 - HTML GETs are owned by `@fastify/vite` + `@fastify/react`; mutations and auth stay on Fastify under `/api/*`.
-- Alias: `@/*` → `client/*` (components, hooks, lib, styles).
+- Alias: `@/*` → `client/*`; `@app/*` → `app/*` (use in `getData` dynamic imports).
 - Layout/providers: `client/layouts/default.jsx` wraps ThemeProvider/Toast.
 
 ## Component folders

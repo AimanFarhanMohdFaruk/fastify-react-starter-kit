@@ -25,8 +25,8 @@ export async function getData(ctx: {
   req: FastifyRequest
   reply: FastifyReply
 }) {
-  const { getSessionUser } = await import('../../../app/controllers/auth')
-  const { listDemoJobsForUser } = await import('../../../app/models/demo-job')
+  const { getSessionUser } = await import('@app/controllers/auth')
+  const { listDemoJobsForUser } = await import('@app/models/demo-job')
   const user = await getSessionUser(ctx.req)
   if (!user) {
     ctx.reply.redirect('/login')
@@ -66,9 +66,7 @@ export default function Dashboard() {
       try {
         const next = await fetchJobs()
         if (!cancelled) setJobs(next)
-      } catch {
-        // keep last good list
-      }
+      } catch {}
     }
     void tick()
     const id = window.setInterval(() => void tick(), 1500)
