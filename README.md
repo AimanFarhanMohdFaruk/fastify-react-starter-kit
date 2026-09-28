@@ -33,7 +33,7 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 - `client/` is presentation — no domain rules, no client-side business filter/sort of collections.
 - Schema change path: edit `app/models/schema.ts` → `npm run db:generate` → `npm run db:migrate`.
 
-Growing a feature: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md). Frontend patterns: [docs/agents/frontend-patterns.md](docs/agents/frontend-patterns.md). Agent entrypoint: [AGENTS.md](./AGENTS.md).
+Architecture (processes, seams, request paths): [docs/architecture.md](docs/architecture.md). Growing a feature: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md). Frontend patterns: [docs/agents/frontend-patterns.md](docs/agents/frontend-patterns.md). Agent entrypoint: [AGENTS.md](./AGENTS.md).
 
 ## Layout
 

@@ -12,6 +12,7 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 
 | When | Read |
 |------|------|
+| How the kit is built (processes, seams, request paths) | [docs/architecture.md](docs/architecture.md) |
 | Growing a feature (schema, domain, HTTP, jobs) | [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md) |
 | Frontend / pages / design-system work | [docs/agents/frontend-patterns.md](docs/agents/frontend-patterns.md) |
 
