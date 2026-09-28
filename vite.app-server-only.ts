@@ -3,7 +3,6 @@ import { resolve } from 'node:path'
 import { findExports } from 'mlly'
 import type { Plugin } from 'vite'
 
-/** Client bundles must not pull Node/DB code via page `getData` → `@app/*`. */
 export function appServerOnly(appRoot: string): Plugin {
   const root = resolve(appRoot)
   return {
@@ -12,7 +11,6 @@ export function appServerOnly(appRoot: string): Plugin {
     load(id) {
       const file = id.split('?')[0]
       if (!file.startsWith(root)) return
-      // SSR / server environment keeps real modules
       if (this.environment?.name === 'ssr') return
 
       const source = readFileSync(file, 'utf8')
