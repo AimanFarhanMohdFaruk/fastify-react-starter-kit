@@ -18,51 +18,65 @@
 | `components/layout` | Structure (Container, Section, …) |
 | `components/shell` | App chrome (Main, ThemeProvider, providers) |
 | `components/motion-primitives` | Motion wrappers |
-| `components/screen` | Page-specific compositions (optional) |
+| `components/screen` | **Page UI** — one folder per page, composed from ui/layout/shell |
 | `components/core` | Shared non-primitive helpers (images, etc.) |
 | `components/icons.tsx` | App icons |
 
 Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes (`bg-background`, `text-muted-foreground`) over one-off colors.
 
-## Pages
+## Pages vs screens
 
-- Default export; read `getData` results via `useRouteContext().data`.
-- Optional `getMeta()` — `@fastify/react` head tags (e.g. `{ title: '…' }`), not Fastify.
-- Compose with `layout` + `ui` + `shell` — avoid raw HTML + inline style objects for new UI.
-- Local UI state only (open/closed, input drafts). **No** business filter/sort of collections in the client — ask the server.
+Keep route modules thin; put the visible UI in `components/screen/`.
+
+| Layer | Path | Owns |
+|-------|------|------|
+| Route module | `client/pages/<segment>/index.tsx` | `getData`, `getMeta`, default export that reads `useRouteContext().data` and renders the screen |
+| Screen | `client/components/screen/<segment>/<Name>.tsx` | Layout/UI, local state, `/api` fetch — **no** `@app` imports |
+
+Example (dashboard):
+
+```
+client/pages/dashboard/index.tsx          → getData + <Dashboard email jobs />
+client/components/screen/dashboard/dashboard.tsx  → interactive UI
+```
+
+- Import the screen **directly** (no barrel `index.ts`): `@/components/screen/dashboard/dashboard`.
+- Name the screen after the page (`Dashboard`); name the route default something like `DashboardPage` if needed to avoid a clash.
+- Tiny pages (e.g. a one-liner home) may keep UI inline until they grow — prefer `screen/` once there is real composition or client state.
+- Screens may use `useState` / `useEffect`; that is normal SSR + hydration, not a Next `"use client"` boundary.
 - Navigation: `react-router` `Link` (`to=…`).
+- Local UI state only (open/closed, input drafts). **No** business filter/sort of collections in the client — ask the server.
 
 ## Data fetching
 
 ### Page load (SSR / first paint + client navigations)
 
-`@fastify/react` convention — export `getData` from the **same** route module (`client/pages/…/index.tsx`):
+`@fastify/react` convention — export `getData` from the **route module** (`client/pages/…/index.tsx`), not from the screen:
 
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
-2. Return value becomes `useRouteContext().data`.
-3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only — keeps Node/DB out of the browser bundle. Do **not** static-import `@app/*` at the top of a page or component.
+2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
+3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only — keeps Node/DB out of the browser bundle. Do **not** static-import `@app/*` at the top of a page or screen.
 4. Auth gates: `ctx.reply.redirect(…)` then `return {}`.
+5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
 
-Example shape: dashboard seeds `email` + `jobs` in `getData`; home seeds `title` + `email`.
+### Screens / live updates
 
-### Client components / live updates
-
-`client/components/**` and in-page effects **never** import `@app/*`. They talk to Fastify over HTTP:
+`client/components/screen/**` (and other components) **never** import `@app/*`. They talk to Fastify over HTTP:
 
 | Need | How |
 |------|-----|
 | Mutations / polls / refreshes | `fetch('/api/…')` — prefer helpers in `client/lib/api.ts` |
 | Auth UI (sign in/out, magic link) | Better Auth `authClient` → `/api/auth/*` |
-| Initial SSR props | From the parent page’s `getData` via props or `useRouteContext()` — don’t re-fetch unless live |
+| Initial SSR props | From the page via props (from `getData`) — don’t re-fetch unless live |
 
-Kit pattern for widgets (job list): **SSR seed from `getData`**, then `POST /api/…` + poll `GET /api/…` into React state. Stop polling when no work is in flight.
+Kit pattern for widgets (job list): **SSR seed from `getData` → props**, then `POST /api/…` + poll `GET /api/…` into screen state. Stop polling when no work is in flight.
 
 ### Boundaries
 
 | May | Must not |
 |-----|----------|
-| `getData` → dynamic `import('@app/…')` | Static `@app` / `app/models` import in components or page top-level |
-| Render route data; local UI state; `/api` fetch | Domain rules; client-side business filter/sort |
+| `getData` → dynamic `import('@app/…')` | Static `@app` / `app/models` import in screens or page top-level |
+| Screen: render props; local UI state; `/api` fetch | Domain rules; client-side business filter/sort |
 | Better Auth client for auth flows | Encode job/workflow logic in React |
 | Presentational hooks (`useMediaQuery`, theme) | Call Drizzle / pg-boss from `client/` |
 

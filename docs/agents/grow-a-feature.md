@@ -56,9 +56,9 @@ Controller must not:
 
 ## 5. Page last
 
-- Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`).
-- Reusable UI → `client/components/` (see [frontend-patterns.md](frontend-patterns.md)).
-- Initial props from `getData` (dynamic `import('@app/…')` for models/session); live updates via `/api` into React state. Components never import `@app/*`.
+- Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`) — `getData` / `getMeta` + render screen.
+- Page UI → `client/components/screen/<segment>/…` (see [frontend-patterns.md](frontend-patterns.md)); import the `.tsx` directly (no barrel).
+- Initial props from `getData` (dynamic `import('@app/…')`); live updates in the screen via `/api`. Screens never import `@app/*`.
 
 **Done when:** the happy path works end-to-end with presentation-only UI.
 
