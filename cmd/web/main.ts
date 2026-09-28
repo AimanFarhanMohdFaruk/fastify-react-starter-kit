@@ -25,10 +25,19 @@ const logger = isProd
     }
 
 async function main() {
-  const app = Fastify({ logger })
+  const app = Fastify({
+    logger,
+    // Needed so rate-limit keys on the real client IP behind a reverse proxy.
+    trustProxy: true,
+  })
 
   await app.register(cookie)
   await app.register(formbody)
+  await app.register(import('@fastify/rate-limit'), {
+    // Generous in local/Vite so HMR assets do not trip the limiter.
+    max: isProd ? 300 : 10_000,
+    timeWindow: '1 minute',
+  })
 
   await registerAuthRoutes(app)
   await registerJobRoutes(app)

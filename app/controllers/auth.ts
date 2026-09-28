@@ -39,6 +39,13 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.route({
     method: ['GET', 'POST'],
     url: '/api/auth/*',
+    config: {
+      // Tighter than the global web limit — auth endpoints are brute-force targets.
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute',
+      },
+    },
     async handler(req, reply) {
       const request = await toAuthRequest(req)
       const response = await auth.handler(request)
