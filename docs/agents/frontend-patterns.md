@@ -55,7 +55,7 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
 2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
-3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only — keeps Node/DB out of the browser bundle. Do **not** static-import `@app/*` at the top of a page or screen.
+3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only. Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen.
 4. Auth gates: `ctx.reply.redirect(…)` then `return {}`.
 5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
 
