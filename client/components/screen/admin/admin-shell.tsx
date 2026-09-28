@@ -1,8 +1,13 @@
 import { Link } from 'react-router'
 
-import { Container } from '@/components/layout'
+import { StarterMark } from '@/components/icons'
 import { ThemeSelector } from '@/components/shell/theme-switch'
 import { cn } from '@/lib/utils'
+
+const nav = [
+  { id: 'users' as const, label: 'Users', to: '/admin/users' },
+  { id: 'jobs' as const, label: 'Jobs', to: '/admin/jobs' },
+]
 
 export function AdminShell({
   children,
@@ -12,39 +17,39 @@ export function AdminShell({
   active: 'users' | 'jobs'
 }) {
   return (
-    <div className="min-h-dvh">
-      <header className="border-border border-b">
-        <Container className="flex h-14 items-center justify-between gap-4 sm:h-16">
-          <nav className="flex items-center gap-6 text-sm">
-            <span className="font-medium tracking-tight">admin</span>
+    <div className="flex min-h-dvh bg-background">
+      <aside className="flex w-44 shrink-0 flex-col border-border border-r bg-sidebar">
+        <div className="flex flex-1 flex-col p-4">
+          <Link to="/admin/users" className="mb-6 flex items-center gap-2 text-foreground">
+            <StarterMark className="size-4" />
+            <span className="text-sm tracking-tight">starter</span>
+          </Link>
+          <nav className="space-y-2">
+            {nav.map((item) => (
+              <Link
+                key={item.id}
+                to={item.to}
+                className={cn(
+                  'block h-7 rounded-md px-2 text-xs leading-7 text-muted-foreground transition-colors hover:text-foreground',
+                  active === item.id && 'bg-accent text-foreground',
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-auto space-y-3 pt-6">
             <Link
-              to="/admin/users"
-              className={cn(
-                'text-muted-foreground hover:text-foreground',
-                active === 'users' && 'text-foreground',
-              )}
+              to="/dashboard"
+              className="block h-7 rounded-md px-2 text-xs leading-7 text-muted-foreground hover:text-foreground"
             >
-              Users
-            </Link>
-            <Link
-              to="/admin/jobs"
-              className={cn(
-                'text-muted-foreground hover:text-foreground',
-                active === 'jobs' && 'text-foreground',
-              )}
-            >
-              Jobs
-            </Link>
-            <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
               App
             </Link>
-          </nav>
-          <ThemeSelector />
-        </Container>
-      </header>
-      <main className="py-10">
-        <Container>{children}</Container>
-      </main>
+            <ThemeSelector />
+          </div>
+        </div>
+      </aside>
+      <main className="min-w-0 flex-1 p-4 sm:p-6 md:p-8">{children}</main>
     </div>
   )
 }
