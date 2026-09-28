@@ -1,6 +1,6 @@
 # Fastify React starter
 
-An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the product), and domain lives in fat models — not in the frontend.
+An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the product), and domain lives in fat models, not in the frontend.
 
 Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself every major.
 
@@ -18,7 +18,7 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 
 ## Approach (MVC)
 
-| Rails idea       | Here                                                                         |
+| Idea             | What it controls                                                             |
 | ---------------- | ---------------------------------------------------------------------------- |
 | Fat models       | `app/models/` — schema, invariants, queries, status transitions              |
 | Thin controllers | `app/controllers/` — auth gate, parse, call one model/service, JSON          |
