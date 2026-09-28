@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 export type HomeScreenProps = {
   email: string | null
+  isAdmin: boolean
 }
 
 const features = [
@@ -106,7 +107,7 @@ function ProductPreview({ className }: { className?: string }) {
   )
 }
 
-export function HomeScreen({ email }: HomeScreenProps) {
+export function HomeScreen({ email, isAdmin }: HomeScreenProps) {
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <div
@@ -123,13 +124,22 @@ export function HomeScreen({ email }: HomeScreenProps) {
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeSelector />
             {email ? (
-              <Button size="sm" render={<Link to="/dashboard" />}>
-                Dashboard
-              </Button>
+              <>
+                <Button size="sm" render={<Link to="/dashboard" />}>
+                  Dashboard
+                </Button>
+                {isAdmin && (
+                  <Button size="sm" render={<Link to="/admin/users" />}>
+                    Admin
+                  </Button>
+                )}
+              </>
             ) : (
-              <Button size="sm" variant="ghost" render={<Link to="/login" />}>
-                Sign in
-              </Button>
+              <>
+                <Button size="sm" variant="ghost" render={<Link to="/login" />}>
+                  Sign in
+                </Button>
+              </>
             )}
           </div>
         </Container>
