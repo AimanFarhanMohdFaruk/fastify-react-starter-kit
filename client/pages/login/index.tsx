@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useState } from 'react'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { Container } from '@/components/layout'
 import { Main } from '@/components/shell/main'
@@ -9,9 +10,20 @@ import { Input } from '@/components/ui/input'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
 
-import { authClient } from '../lib/auth-client'
+import { authClient } from '../../lib/auth-client'
 
-export { getData } from './login.getData.ts?server'
+export async function getData(ctx: {
+  req: FastifyRequest
+  reply: FastifyReply
+}) {
+  const { getSessionUser } = await import('../../../app/controllers/auth')
+  const user = await getSessionUser(ctx.req)
+  if (user) {
+    ctx.reply.redirect('/dashboard')
+    return {}
+  }
+  return { error: null as string | null }
+}
 
 export function getMeta() {
   return { title: 'Sign in' }

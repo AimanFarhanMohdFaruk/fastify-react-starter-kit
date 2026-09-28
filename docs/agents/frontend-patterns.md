@@ -4,7 +4,8 @@
 
 ## Delivery
 
-- Pages are route modules under `client/pages/` — `getData` for SSR props, default export for UI.
+- Pages are route modules under `client/pages/` — one folder per URL segment, **`index.tsx`** as the route file (e.g. `pages/login/index.tsx` → `/login`). Home stays `pages/index.tsx` → `/`.
+- Only put route modules under `pages/`; shared UI belongs in `client/components/`.
 - HTML GETs are owned by `@fastify/vite` + `@fastify/react`; mutations and auth stay on Fastify under `/api/*`.
 - Alias: `@/*` → `client/*` (components, hooks, lib, styles).
 - Layout/providers: `client/layouts/default.jsx` wraps ThemeProvider/Toast.
@@ -26,7 +27,7 @@ Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes
 ## Pages
 
 - Default export; read `getData` results via `useRouteContext().data`.
-- `getData` may call models/session helpers via **`*.getData.ts?server`** re-exports (keeps Node deps out of the client bundle).
+- Export `getData` in the **same** page file. Call models/session via **dynamic `import()` inside `getData`** so Node/DB deps stay out of the client bundle (do not static-import `app/models` at the top of the page).
 - Compose with `layout` + `ui` + `shell` — avoid raw HTML + inline style objects for new UI.
 - Local UI state only (open/closed, input drafts). **No** business filter/sort of collections in the client — ask the server.
 - Mutations: `fetch` against `/api/*` controllers. Auth client is fine for Better Auth endpoints.

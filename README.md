@@ -46,7 +46,7 @@ app/controllers   # thin /api HTTP
 app/jobs          # thin worker adapters
 db/migrate        # Drizzle migrations (generate + migrate)
 docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
-client/pages      # route modules (getData + UI)
+client/pages      # route folders (…/index.tsx → URL; getData + UI)
 client/components # design system (ui / layout / shell / motion / screen)
 client/styles     # Tailwind v4 + tweakcn theme (globals.css)
 ```

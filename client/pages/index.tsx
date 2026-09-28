@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useRouteContext } from '@fastify/react/client'
+import type { FastifyRequest } from 'fastify'
 
 import { Container, Section } from '@/components/layout'
 import { ThemeSelector } from '@/components/shell/theme-switch'
@@ -12,7 +13,14 @@ type HomeData = {
   email: string | null
 }
 
-export { getData } from './index.getData.ts?server'
+export async function getData(ctx: { req: FastifyRequest }) {
+  const { getSessionUser } = await import('../../app/controllers/auth')
+  const user = await getSessionUser(ctx.req)
+  return {
+    title: 'Fastify React starter',
+    email: user?.email ?? null,
+  }
+}
 
 export function getMeta() {
   return { title: 'Fastify React starter' }

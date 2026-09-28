@@ -83,4 +83,4 @@ Polling every 1.5s with `preserveScroll: true` is already the right Inertia-shap
 
 ## Adopted (kit migration)
 
-The kit left Inertia for **`@fastify/react`** and adopted **option E**: `POST /api/jobs` + poll `GET /api/jobs` into React state on the dashboard page. No PRG, no scroll jump from page visits. See `client/pages/dashboard.tsx` and `app/controllers/jobs.ts`.
+The kit left Inertia for **`@fastify/react`** and adopted **option E**: `POST /api/jobs` + poll `GET /api/jobs` into React state on the dashboard page. No PRG, no scroll jump from page visits. See `client/pages/dashboard/index.tsx` and `app/controllers/jobs.ts`.

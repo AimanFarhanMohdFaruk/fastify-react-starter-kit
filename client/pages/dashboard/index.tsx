@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useEffect, useState } from 'react'
 import { useRouteContext } from '@fastify/react/client'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { Container } from '@/components/layout'
 import { Main } from '@/components/shell/main'
@@ -10,8 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 
-import { authClient } from '../lib/auth-client'
-import { enqueueJob, fetchJobs, type JobDto } from '../lib/api'
+import { authClient } from '../../lib/auth-client'
+import { enqueueJob, fetchJobs, type JobDto } from '../../lib/api'
 
 type DashboardData = {
   email: string
@@ -20,7 +21,29 @@ type DashboardData = {
 
 const ACTIVE = new Set(['queued', 'running'])
 
-export { getData } from './dashboard.getData.ts?server'
+export async function getData(ctx: {
+  req: FastifyRequest
+  reply: FastifyReply
+}) {
+  const { getSessionUser } = await import('../../../app/controllers/auth')
+  const { listDemoJobsForUser } = await import('../../../app/models/demo-job')
+  const user = await getSessionUser(ctx.req)
+  if (!user) {
+    ctx.reply.redirect('/login')
+    return {}
+  }
+  const jobs = await listDemoJobsForUser(user.id)
+  return {
+    email: user.email,
+    jobs: jobs.map((j) => ({
+      id: j.id,
+      payload: j.payload,
+      status: j.status,
+      result: j.result,
+      createdAt: j.createdAt.toISOString(),
+    })),
+  }
+}
 
 export function getMeta() {
   return { title: 'Dashboard' }
