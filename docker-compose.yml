@@ -20,5 +20,24 @@ services:
       retries: 12
       start_period: 10s
 
+  # S3-compatible object store (API :9000, console :9001).
+  # Point the app at http://localhost:9000 with forcePathStyle.
+  rustfs:
+    image: rustfs/rustfs:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      # Local defaults — override before exposing beyond localhost.
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+    volumes:
+      - kit_rustfs_data:/data
+
 volumes:
   kit_pg_data:
+  kit_rustfs_data:

@@ -78,7 +78,7 @@ export async function truncateAppTables() {
   const sql = postgres(url, { max: 1 })
   try {
     await sql`
-      TRUNCATE TABLE demo_jobs, session, account, verification, "user" RESTART IDENTITY CASCADE
+      TRUNCATE TABLE documents, demo_jobs, session, account, verification, "user" RESTART IDENTITY CASCADE
     `
   } finally {
     await sql.end()

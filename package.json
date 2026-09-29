@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Fastify React starter — Fastify + @fastify/react + Drizzle + Better Auth + pg-boss",
   "scripts": {
-    "dev": "tsx cmd/web/main.ts",
+    "dev": "docker compose up -d && tsx cmd/web/main.ts",
+    "dev:all": "concurrently -n web,worker -c blue,magenta \"npm run dev\" \"npm run worker\"",
     "worker": "tsx cmd/worker/main.ts",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
@@ -22,9 +23,11 @@
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1142.0",
     "@base-ui/react": "^1.8.0",
     "@fastify/cookie": "^11.1.2",
     "@fastify/formbody": "^9.0.0",
+    "@fastify/multipart": "^10.1.2",
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/react": "^1.2.2",
     "@fastify/vite": "^10.0.0",
@@ -39,6 +42,7 @@
     "lucide-react": "^1.48.0",
     "motion": "^13.4.4",
     "next-themes": "^0.4.6",
+    "parse-pdf": "^3.1.0",
     "pg-boss": "^12.35.0",
     "postgres": "^3.4.9",
     "react": "^19.3.0",
@@ -56,6 +60,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.4",
     "drizzle-kit": "^0.31.11",
     "pino-pretty": "^13.1.3",
     "tailwindcss": "^4.3.3",

@@ -13,14 +13,14 @@ Fastify owns HTTP. React SSR is a **plugin** (`@fastify/vite` + `@fastify/react`
 | **web** | `cmd/web/main.ts` | Cookies, `/api/*` controllers, then Vite SSR for HTML |
 | **worker** | `cmd/worker/main.ts` | pg-boss consumer only — never inside the web process |
 
-Both talk to the same Postgres (`DATABASE_URL`). Schema and migrations live under `app/models/schema.ts` → `db/migrate/` (Drizzle).
+Both talk to the same Postgres (`DATABASE_URL`). Schema and migrations live under `app/models/schema.ts` → `db/migrate/` (Drizzle). Local object bytes live in RustFS (S3-compatible) via `app/object-store.ts`.
 
 Boot order on web matters: register **API controllers before** `FastifyVite`, so `/api` is never swallowed by the SPA/SSR catch-all.
 
 ```
 cmd/web
-  ├── cookie + formbody
-  ├── registerAuthRoutes / registerJobRoutes   → /api/*
+  ├── cookie + formbody + multipart
+  ├── registerAuthRoutes / registerJobRoutes / registerDocumentRoutes   → /api/*
   └── FastifyVite + @fastify/react            → HTML pages
 ```
 
@@ -42,7 +42,7 @@ cmd/worker    ──dequeue──►  app/jobs ──► models | services
 | **Jobs** | `app/jobs/` | Thin `boss.work` adapters → model/service |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
 
-`app/db.ts` is the shared Drizzle + `postgres` client. Controllers do not open DB connections or talk to pg-boss directly.
+`app/db.ts` is the shared Drizzle + `postgres` client. `app/object-store.ts` is the S3-compatible store (RustFS locally). Controllers do not open DB connections or talk to pg-boss / S3 directly.
 
 ## Page request path (HTML)
 
@@ -65,7 +65,7 @@ Mutations, polls, and Better Auth stay on Fastify:
 | Surface | Example |
 |---------|---------|
 | Better Auth | `/api/auth/*` (handler in `app/controllers/auth`) |
-| App JSON | `/api/jobs` (list / enqueue) |
+| App JSON | `/api/jobs` (list / enqueue), `/api/documents` (upload / list / get) |
 
 Typical controller: session gate → parse → one model or service → `reply.send`.
 

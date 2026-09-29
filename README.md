@@ -4,7 +4,7 @@ An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the pr
 
 Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself.
 
-**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** (Docker)
+**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** · **RustFS** (S3-compatible object store via Docker)
 
 ## Why this exists
 
@@ -67,8 +67,8 @@ npm install
 npm run db:up          # pulls pgvector/pgvector:pg18 and starts it
 npm run db:migrate
 
-npm run dev            # http://localhost:3000
-npm run worker         # other terminal
+npm run dev:all        # postgres + rustfs + web + worker → http://localhost:3000
+# npm run worker       # other terminal, if not using dev:all
 ```
 
 Promote an Admin after migrate:
@@ -87,6 +87,13 @@ Stop DB: `npm run db:down`
 - `CREATE EXTENSION vector` lives in the initial migration; compose also runs `docker/init/01-vector.sql` on first volume boot.
 - Default URL: `postgres://kit:kit@localhost:5432/starter_kit`
 - Fresh local DB: `docker compose down -v` → `npm run db:up` → `npm run db:migrate`.
+
+## Object store (RustFS)
+
+- Compose runs **RustFS** (S3-compatible) on `:9000` (API) and `:9001` (console).
+- `npm run dev` / `npm run dev:all` start compose services (Postgres + RustFS) before the web process.
+- App env: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (see `.env.example`).
+- Uploads: `POST /api/documents` (multipart `.md` / `.txt` / `.pdf`, max 5MB); bytes in the bucket, metadata in `documents`.
 
 ## Deploy
 

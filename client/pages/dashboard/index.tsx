@@ -2,11 +2,12 @@ import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { Dashboard } from '@/components/screen/dashboard/dashboard'
-import type { JobDto } from '@/lib/api'
+import type { DocumentDto, JobDto } from '@/lib/api'
 
 type DashboardData = {
   email: string
   jobs: JobDto[]
+  documents: DocumentDto[]
 }
 
 export async function getData(ctx: {
@@ -15,12 +16,16 @@ export async function getData(ctx: {
 }) {
   const { getSessionUser } = await import('@app/controllers/auth')
   const { listDemoJobsForUser } = await import('@app/models/demo-job')
+  const { listDocumentsForUser } = await import('@app/models/document')
   const user = await getSessionUser(ctx.req)
   if (!user) {
     ctx.reply.redirect('/login')
     return {}
   }
-  const jobs = await listDemoJobsForUser(user.id)
+  const [jobs, docs] = await Promise.all([
+    listDemoJobsForUser(user.id),
+    listDocumentsForUser(user.id),
+  ])
   return {
     email: user.email,
     jobs: jobs.map((j) => ({
@@ -29,6 +34,16 @@ export async function getData(ctx: {
       status: j.status,
       result: j.result,
       createdAt: j.createdAt.toISOString(),
+    })),
+    documents: docs.map((d) => ({
+      id: d.id,
+      filename: d.filename,
+      contentType: d.contentType,
+      byteSize: d.byteSize,
+      status: d.status,
+      extractedTextLength: d.extractedText?.length ?? null,
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
     })),
   }
 }
@@ -39,5 +54,11 @@ export function getMeta() {
 
 export default function DashboardPage() {
   const { data } = useRouteContext() as { data: DashboardData }
-  return <Dashboard email={data.email} jobs={data.jobs} />
+  return (
+    <Dashboard
+      email={data.email}
+      jobs={data.jobs}
+      documents={data.documents ?? []}
+    />
+  )
 }

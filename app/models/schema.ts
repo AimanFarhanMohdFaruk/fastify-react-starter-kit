@@ -70,4 +70,21 @@ export const demoJobs = pgTable('demo_jobs', {
   finishedAt: timestamp('finished_at'),
 })
 
+/** Uploaded kit docs — bytes in object store, metadata (+ later extracted text) here. */
+export const documents = pgTable('documents', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  key: text('key').notNull().unique(),
+  filename: text('filename').notNull(),
+  contentType: text('content_type').notNull(),
+  byteSize: integer('byte_size').notNull(),
+  status: text('status').notNull().default('uploaded'),
+  extractedText: text('extracted_text'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export type DemoJob = typeof demoJobs.$inferSelect
+export type Document = typeof documents.$inferSelect
