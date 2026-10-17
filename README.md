@@ -4,7 +4,7 @@ An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the pr
 
 Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself.
 
-**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** · **RustFS** (S3-compatible object store via Docker)
+**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** · **Redis** · **RustFS** (S3-compatible object store via Docker)
 
 ## Why this exists
 
@@ -65,9 +65,10 @@ cp .env.example .env
 npm install
 
 npm run db:up          # pulls pgvector/pgvector:pg18 and starts it
+npm run redis:up       # local Redis (optional; also started by npm run dev)
 npm run db:migrate
 
-npm run dev:all        # postgres + rustfs + web + worker → http://localhost:3000
+npm run dev:all        # compose (postgres + redis + rustfs) + web + worker → http://localhost:3000
 # npm run worker       # other terminal, if not using dev:all
 ```
 
@@ -77,7 +78,7 @@ Promote an Admin after migrate:
 2. `npm run admin:promote -- you@example.com`
 3. Sign in, open `/admin` (redirects to `/admin/users`)
 
-Stop DB: `npm run db:down`
+Stop compose services: `npm run db:down`
 
 ## Database
 
@@ -88,10 +89,19 @@ Stop DB: `npm run db:down`
 - Default URL: `postgres://kit:kit@localhost:5432/starter_kit`
 - Fresh local DB: `docker compose down -v` → `npm run db:up` → `npm run db:migrate`.
 
+## Redis
+
+- Compose service **`redis:7-alpine`** on `localhost:6379` (AOF persistence in `kit_redis_data`).
+- Default URL: `redis://localhost:6379` (`REDIS_URL` in `.env`).
+- App client: `app/redis.ts` — `import { getRedis } from './redis'` (lazy connect, one client per process).
+- Start alone: `npm run redis:up`. Logs: `npm run redis:logs`.
+- `npm run dev` / `docker compose up -d` starts Redis with the other local services.
+- Not included in `docker-compose.prod.yml` — point `REDIS_URL` at a managed Redis when you need it in prod.
+
 ## Object store (RustFS)
 
 - Compose runs **RustFS** (S3-compatible) on `:9000` (API) and `:9001` (console).
-- `npm run dev` / `npm run dev:all` start compose services (Postgres + RustFS) before the web process.
+- `npm run dev` / `npm run dev:all` start compose services (Postgres + Redis + RustFS) before the web process.
 - App env: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (see `.env.example`).
 - Uploads: `POST /api/documents` (multipart `.md` / `.txt` / `.pdf`, max 5MB); bytes in the bucket, metadata in `documents`.
 

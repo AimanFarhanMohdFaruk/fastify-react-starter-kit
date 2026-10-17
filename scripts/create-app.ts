@@ -111,6 +111,7 @@ function rewriteContent(
   let out = content
     .replaceAll('starter_kit', snake)
     .replaceAll('kit_pg_data', `${snake}_pg_data`)
+    .replaceAll('kit_redis_data', `${snake}_redis_data`)
     .replaceAll('kit_test', `${snake}_test`)
     .replaceAll('postgres://kit:kit@', `postgres://${snake}:${snake}@`)
     .replaceAll('fastify-react-starter', kebab)

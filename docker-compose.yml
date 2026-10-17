@@ -20,6 +20,22 @@ services:
       retries: 12
       start_period: 10s
 
+  # Local Redis for caches, rate limits, and ephemeral coordination.
+  # Default URL: redis://localhost:6379
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - kit_redis_data:/data
+    command: ['redis-server', '--appendonly', 'yes']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
   # S3-compatible object store (API :9000, console :9001).
   # Point the app at http://localhost:9000 with forcePathStyle.
   rustfs:
@@ -40,4 +56,5 @@ services:
 
 volumes:
   kit_pg_data:
+  kit_redis_data:
   kit_rustfs_data:
