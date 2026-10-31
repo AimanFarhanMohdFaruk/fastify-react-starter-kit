@@ -6,6 +6,7 @@ import type { DocumentDto, JobDto } from '@/lib/api'
 
 type DashboardData = {
   email: string
+  isAdmin: boolean
   jobs: JobDto[]
   documents: DocumentDto[]
 }
@@ -15,6 +16,7 @@ export async function getData(ctx: {
   reply: FastifyReply
 }) {
   const { getSessionUser } = await import('@app/controllers/auth')
+  const { isAdmin } = await import('@app/models/admin')
   const { listDemoJobsForUser } = await import('@app/models/demo-job')
   const { listDocumentsForUser } = await import('@app/models/document')
   const user = await getSessionUser(ctx.req)
@@ -28,6 +30,7 @@ export async function getData(ctx: {
   ])
   return {
     email: user.email,
+    isAdmin: isAdmin(user),
     jobs: jobs.map((j) => ({
       id: j.id,
       payload: j.payload,
@@ -57,6 +60,7 @@ export default function DashboardPage() {
   return (
     <Dashboard
       email={data.email}
+      isAdmin={data.isAdmin}
       jobs={data.jobs}
       documents={data.documents ?? []}
     />
