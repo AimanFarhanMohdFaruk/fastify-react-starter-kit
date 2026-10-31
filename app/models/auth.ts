@@ -2,6 +2,8 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, magicLink } from 'better-auth/plugins'
 import { db } from '../db'
+import { getMailer } from '../mail'
+import { magicLinkEmail } from '../mail/templates/magic-link'
 import * as schema from './schema'
 
 export const auth = betterAuth({
@@ -26,8 +28,7 @@ export const auth = betterAuth({
     }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        // Dev transport — swap for a real provider later (STACK.md fog)
-        console.log(`[magic-link] ${email} → ${url}`)
+        await getMailer().send(magicLinkEmail(email, url))
       },
     }),
   ],

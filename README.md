@@ -4,7 +4,7 @@ An MVC shaped Node starter: Fastify owns HTTP, React SSR is a plugin (not the pr
 
 Built as an alternative to defaulting every app to **Next.js**. You keep React and SSR, without adopting App Router, RSC, or a framework that reinvents itself.
 
-**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** · **Redis** · **RustFS** (S3-compatible object store via Docker)
+**Stack:** Fastify · [`@fastify/react`](https://vite.fastify.dev/react/) (Vite SSR) · Drizzle · Better Auth · pg-boss · **Postgres 18 + pgvector** · **Redis** · **RustFS** (S3-compatible object store via Docker) · **Inbucket** (local SMTP)
 
 ## Why this exists
 
@@ -41,6 +41,7 @@ Architecture (processes, seams, request paths): [docs/architecture.md](docs/arch
 cmd/web           # Fastify + /api + @fastify/vite
 cmd/worker        # pg-boss consumer
 app/models        # domain + Drizzle / Better Auth
+app/mail          # email transport + templates (Inbucket / Resend)
 app/services      # cross-model (e.g. enqueue)
 app/controllers   # thin /api HTTP
 app/jobs          # thin worker adapters
@@ -68,9 +69,11 @@ npm run db:up          # pulls pgvector/pgvector:pg18 and starts it
 npm run redis:up       # local Redis (optional; also started by npm run dev)
 npm run db:migrate
 
-npm run dev:all        # compose (postgres + redis + rustfs) + web + worker → http://localhost:3000
+npm run dev:all        # compose (postgres + redis + rustfs + inbucket) + web + worker → http://localhost:3000
 # npm run worker       # other terminal, if not using dev:all
 ```
+
+Magic-link mail: with `MAIL_TRANSPORT=smtp` (default in `.env.example`), open **http://localhost:8025** (Inbucket) after requesting a link.
 
 Promote an Admin after migrate:
 
@@ -101,9 +104,16 @@ Stop compose services: `npm run db:down`
 ## Object store (RustFS)
 
 - Compose runs **RustFS** (S3-compatible) on `:9000` (API) and `:9001` (console).
-- `npm run dev` / `npm run dev:all` start compose services (Postgres + Redis + RustFS) before the web process.
+- `npm run dev` / `npm run dev:all` start compose services (Postgres + Redis + RustFS + Inbucket) before the web process.
 - App env: `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (see `.env.example`).
 - Uploads: `POST /api/documents` (multipart `.md` / `.txt` / `.pdf`, max 5MB); bytes in the bucket, metadata in `documents`.
+
+## Email
+
+- App client: `app/mail.ts` — `getMailer().send(...)` (infra, like object-store). Magic-link copy in `app/mail/templates/`.
+- **Local:** Compose **Inbucket** — SMTP `localhost:2500`, web UI **http://localhost:8025** (port remapped; RustFS owns `:9000`).
+- Env: `MAIL_TRANSPORT=smtp|resend|log`, `MAIL_FROM`, plus `SMTP_*` or `RESEND_API_KEY` (see `.env.example`).
+- **Prod:** `MAIL_TRANSPORT=resend` and a verified `MAIL_FROM` / `RESEND_API_KEY`.
 
 ## Deploy
 
@@ -132,11 +142,14 @@ TLS: terminate at your cloud load balancer / Caddy in front of this compose, or 
 
 ### Environment (`.env.production`)
 
-| Variable       | Purpose                                                     |
-| -------------- | ----------------------------------------------------------- |
-| `DATABASE_URL` | Cloud Postgres URL (ssl usually required)                   |
-| `APP_URL`      | Public origin matching nginx (Better Auth `trustedOrigins`) |
-| `HOST_PORT`    | Host port mapped to nginx `80` (default `80`)               |
+| Variable           | Purpose                                                     |
+| ------------------ | ----------------------------------------------------------- |
+| `DATABASE_URL`     | Cloud Postgres URL (ssl usually required)                   |
+| `APP_URL`          | Public origin matching nginx (Better Auth `trustedOrigins`) |
+| `HOST_PORT`        | Host port mapped to nginx `80` (default `80`)               |
+| `MAIL_TRANSPORT`   | `resend` (or `log` / `smtp`)                                |
+| `MAIL_FROM`        | Verified sender for Resend                                  |
+| `RESEND_API_KEY`   | Resend API key when `MAIL_TRANSPORT=resend`                 |
 
 ### Manual / platform deploy (no Compose)
 
@@ -153,9 +166,9 @@ NODE_ENV=production npm run start:worker
 - [ ] Cloud Postgres with **pgvector**
 - [ ] `.env.production` set (`DATABASE_URL`, `APP_URL`)
 - [ ] `docker compose … up -d --build` (or equivalent platform processes)
-- [ ] Swap magic-link `console.log` for real email before real users
+- [ ] Set `MAIL_TRANSPORT=resend`, `MAIL_FROM`, and `RESEND_API_KEY` before real users
 
 ## Notes
 
-- Magic links print to the **web** process console in development.
+- Local magic links land in **Inbucket** (`http://localhost:8025`) when `MAIL_TRANSPORT=smtp`. Use `MAIL_TRANSPORT=log` to print to the web console instead.
 - Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*` and `/api/jobs`. Job list live-updates by polling `GET /api/jobs`.

@@ -54,7 +54,21 @@ services:
     volumes:
       - kit_rustfs_data:/data
 
+  # Local SMTP catch-all for magic links (and other mail).
+  # SMTP :2500 → app MAIL_TRANSPORT=smtp. Web UI :8025 (9000 is RustFS).
+  inbucket:
+    image: inbucket/inbucket:latest
+    ports:
+      - "8025:9000" # Web UI
+      - "2500:2500" # SMTP
+    environment:
+      INBUCKET_SMTP_DISABLED: "false"
+      INBUCKET_WEB_DISABLED: "false"
+    volumes:
+      - kit_inbucket_data:/var/inbucket
+
 volumes:
   kit_pg_data:
   kit_redis_data:
   kit_rustfs_data:
+  kit_inbucket_data:
