@@ -38,6 +38,11 @@ export async function createDocument(input: CreateDocumentInput): Promise<Docume
   return row
 }
 
+export async function getDocumentById(id: string) {
+  const [row] = await db.select().from(documents).where(eq(documents.id, id)).limit(1)
+  return row ?? null
+}
+
 export async function getDocumentForUser(id: string, userId: string) {
   const [row] = await db
     .select()

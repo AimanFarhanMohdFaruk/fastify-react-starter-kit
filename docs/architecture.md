@@ -26,7 +26,7 @@ cmd/web
 
 ## Layers (MVC)
 
-Dependency rule: **inward only**. Models never import controllers, workers, or `client/`.
+Dependency rule: **inward only**. Models never import controllers, queue, or `client/`.
 
 ```
 client/pages  ──getData──►  app/controllers | app/models | app/services
@@ -37,7 +37,7 @@ cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► s
 | Layer | Path | Owns |
 |-------|------|------|
 | **Models** | `app/models/` | Schema, invariants, queries, Better Auth tables |
-| **Services** | `app/services/` | Cross-model or external side effect; upload policy; WORK called from `queue` handlers |
+| **Services** | `app/services/` | Cross-model or external side effect; upload policy; job bodies called from `queue` handlers |
 | **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
 | **Queue** | `app/queue.ts` | Stupid bus: `handlers` registry, typed `enqueue`, `getBoss`, `registerWorkers` |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
@@ -77,12 +77,12 @@ Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDo
 
 The queue is **not** coupled to a domain table. pg-boss holds delivery state (like Redis in Sidekiq); you do not model `pgboss.*`.
 
-1. Caller `enqueue(name, args)` via `app/queue.ts` (e.g. from `POST /api/work`).
+1. Caller `enqueue(name, args)` via `app/queue.ts` (e.g. from `POST /api/work`, or `uploadDocument` → `parse_document`).
 2. Worker process calls `registerWorkers()` — one `boss.work` on `default`.
 3. Looks up `handlers[name]` and calls the service with `args`.
 4. Service may touch models if the product needs it — **not required** to enqueue.
 
-Demo: `shout` sleeps + logs. No row.
+Demo: `shout` sleeps + logs (no row). Upload enqueues `parse_document` so PDF/text extract does not block the web request.
 
 ## Server-only boundary (`app/` ↔ client bundle)
 
@@ -108,9 +108,9 @@ Better Auth lives in `app/models/auth` (schema + server instance). The web proce
 
 | Need | Use |
 |------|-----|
-| Session in `getData` | `getSessionUser(req)` |
+| Session in `getData` | `getSessionUser(req)` (null when banned) |
 | Admin flag / authz | `isAdmin(user)` — never `role === 'admin'` |
-| Gate `/admin/**` | `gateAdminPage(req, reply)` |
+| Gate `/admin/**` | `gateAdminPage(req, reply)` — check `{ ok }`, not truthiness |
 | Private `/api` | `requireSession` preHandler; `sessionUser(req)` in handlers |
 
 The browser uses the Better Auth client against the same `/api/auth/*` routes.

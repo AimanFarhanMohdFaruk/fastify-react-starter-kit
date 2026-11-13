@@ -32,7 +32,10 @@ describe('parseDocument', () => {
       },
     }
 
-    const parsed = await parseDocument(doc, { objectStore: store })
+    const parsed = await parseDocument(
+      { documentId: doc.id },
+      { objectStore: store },
+    )
     assert.equal(parsed.status, 'ready')
     assert.equal(parsed.extractedText, 'hello')
   })
@@ -58,10 +61,13 @@ describe('parseDocument', () => {
       },
     }
 
-    const parsed = await parseDocument(doc, {
-      objectStore: store,
-      parsePdf: async () => ({ pages: [{ text: 'From PDF' }] }),
-    })
+    const parsed = await parseDocument(
+      { documentId: doc.id },
+      {
+        objectStore: store,
+        parsePdf: async () => ({ pages: [{ text: 'From PDF' }] }),
+      },
+    )
     assert.equal(parsed.status, 'ready')
     assert.equal(parsed.extractedText, 'From PDF')
   })
@@ -87,7 +93,10 @@ describe('parseDocument', () => {
       },
     }
 
-    const parsed = await parseDocument(doc, { objectStore: store })
+    const parsed = await parseDocument(
+      { documentId: doc.id },
+      { objectStore: store },
+    )
     assert.equal(parsed.status, 'failed')
     assert.equal(parsed.extractedText, null)
   })

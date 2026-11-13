@@ -1,4 +1,4 @@
-/** Demo WORK — no domain record; just side effects (log). */
+/** Demo job body — no domain record; just side effects (log). */
 
 export type ShoutArgs = {
   message: string

@@ -4,7 +4,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { sessionUser } from '../auth'
 import { enqueue } from '../../queue'
-import { parseShoutBody } from './dto'
+import { parseShoutBody, workEnqueueDto } from './dto'
 
 export async function create(req: FastifyRequest, reply: FastifyReply) {
   const { message } = parseShoutBody(req.body)
@@ -16,11 +16,9 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
       message: message.trim(),
       userId: sessionUser(req).id,
     })
-    return reply.code(202).send({
-      enqueued: true,
-      name: 'shout',
-      jobId,
-    })
+    return reply
+      .code(202)
+      .send(workEnqueueDto({ name: 'shout', jobId: jobId ?? null }))
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Enqueue failed'
     return reply.code(500).send({ error: msg })

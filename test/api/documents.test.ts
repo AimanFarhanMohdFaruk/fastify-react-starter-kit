@@ -105,7 +105,8 @@ describe('/api/documents', () => {
       byteSize: number
     }
     assert.equal(doc.filename, 'notes.md')
-    assert.equal(doc.status, 'ready')
+    // Parse is enqueued on the stupid bus — response is uploaded, not ready yet.
+    assert.equal(doc.status, 'uploaded')
     assert.equal(doc.byteSize, Buffer.byteLength('# Kit'))
 
     const listed = await app.inject({

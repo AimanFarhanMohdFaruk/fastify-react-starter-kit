@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Transform, type Readable } from 'node:stream'
 import { createDocument } from '../models/document'
 import { getObjectStore, type ObjectStore } from '../object-store'
+import { enqueue } from '../queue'
 import { parseDocument, type ParseDocumentDeps } from './parse-document'
 
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -38,8 +39,13 @@ export type UploadFileInput = {
 
 export type UploadDocumentDeps = ParseDocumentDeps & {
   objectStore?: ObjectStore
-  /** When false, skip parse after upload (tests that only care about PutObject). Default true. */
-  parse?: boolean
+  /**
+   * After PutObject + row insert:
+   * - `'queue'` (default) — enqueue `parse_document` (web stays fast)
+   * - `'sync'` — parse inline (unit tests)
+   * - `false` — skip parse
+   */
+  parse?: 'queue' | 'sync' | false
 }
 
 export function sanitizeFilename(name: string): string {
@@ -90,8 +96,9 @@ function countingTransform(): { stream: Transform; getByteSize: () => number } {
 }
 
 /**
- * Stream file bytes to the object store, persist a documents row, then parse text.
- * Orphan objects are possible if the DB insert fails after PutObject (acceptable for v1).
+ * Stream file bytes to the object store, persist a documents row, then parse
+ * (queue by default). Orphan objects are possible if the DB insert fails after
+ * PutObject (acceptable for v1).
  */
 export async function uploadDocument(
   userId: string,
@@ -119,6 +126,10 @@ export async function uploadDocument(
     status: 'uploaded',
   })
 
-  if (deps.parse === false) return doc
-  return parseDocument(doc, deps)
+  const mode = deps.parse ?? 'queue'
+  if (mode === false) return doc
+  if (mode === 'sync') return parseDocument({ documentId: doc.id }, deps)
+
+  await enqueue('parse_document', { documentId: doc.id })
+  return doc
 }

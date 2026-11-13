@@ -1,14 +1,10 @@
 /** HTTP shapes from controller DTOs (type-only — no client runtime @app). */
+import type { AdminPostDto, AdminUserDto } from '@app/controllers/admin/dto'
 import type { DocumentDto } from '@app/controllers/documents/dto'
 import type { PostDto } from '@app/controllers/posts/dto'
+import type { WorkEnqueueDto } from '@app/controllers/work/dto'
 
-export type { DocumentDto, PostDto }
-
-export type WorkEnqueueResult = {
-  enqueued: boolean
-  name: string
-  jobId: string | null
-}
+export type { AdminPostDto, AdminUserDto, DocumentDto, PostDto, WorkEnqueueDto }
 
 async function handleAuth(res: Response) {
   if (res.status === 401) {
@@ -77,7 +73,7 @@ export async function deletePost(id: string): Promise<void> {
 }
 
 /** Fire-and-forget — no domain row; worker logs the message. */
-export async function enqueueShout(message: string): Promise<WorkEnqueueResult> {
+export async function enqueueShout(message: string): Promise<WorkEnqueueDto> {
   const res = await fetch('/api/work', {
     method: 'POST',
     credentials: 'include',

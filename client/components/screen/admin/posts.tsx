@@ -1,18 +1,9 @@
 import { Link } from 'react-router'
 
 import { AdminShell } from '@/components/screen/admin/admin-shell'
+import type { AdminPostDto } from '@/lib/api'
 
-export type AdminPostRow = {
-  id: string
-  title: string
-  body?: string
-  createdAt: string
-  updatedAt?: string
-  userId: string
-  userEmail: string
-}
-
-export function AdminPostsList({ posts }: { posts: AdminPostRow[] }) {
+export function AdminPostsList({ posts }: { posts: AdminPostDto[] }) {
   return (
     <AdminShell active="posts">
       <h1 className="font-heading text-3xl tracking-tight">Posts</h1>
@@ -40,7 +31,7 @@ export function AdminPostsList({ posts }: { posts: AdminPostRow[] }) {
   )
 }
 
-export function AdminPostDetail({ post }: { post: AdminPostRow }) {
+export function AdminPostDetail({ post }: { post: AdminPostDto }) {
   return (
     <AdminShell active="posts">
       <p className="text-muted-foreground text-sm">

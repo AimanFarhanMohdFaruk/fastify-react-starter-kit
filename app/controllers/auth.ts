@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { auth, type SessionUser } from '../models/auth'
+import { auth, isUserBanned, type SessionUser } from '../models/auth'
 import { isAdmin } from '../models/admin'
 
 declare module 'fastify' {
@@ -30,7 +30,11 @@ export async function toAuthRequest(req: FastifyRequest) {
 
 export async function getSessionUser(req: FastifyRequest) {
   const session = await auth.api.getSession({ headers: fromFastifyHeaders(req) })
-  return session?.user ?? null
+  const user = session?.user ?? null
+  if (!user) return null
+  // Defense in depth — treat an active ban as no session for SSR + /api.
+  if (isUserBanned(user)) return null
+  return user
 }
 
 /** Route preHandler — 401 if no session; sets `req.user`. */

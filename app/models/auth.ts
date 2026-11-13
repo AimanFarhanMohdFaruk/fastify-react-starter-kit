@@ -36,3 +36,13 @@ export const auth = betterAuth({
 })
 
 export type SessionUser = typeof auth.$Infer.Session.user
+
+/** True when the admin-plugin ban is active (no expiry, or expiry in the future). */
+export function isUserBanned(user: {
+  banned?: boolean | null
+  banExpires?: Date | string | null
+}): boolean {
+  if (!user.banned) return false
+  if (user.banExpires == null) return true
+  return new Date(user.banExpires).getTime() > Date.now()
+}

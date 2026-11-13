@@ -1,4 +1,5 @@
 import { PgBoss } from 'pg-boss'
+import { parseDocument } from './services/parse-document'
 import { shout } from './services/shout'
 
 /**
@@ -10,6 +11,7 @@ export const DEFAULT_QUEUE = 'default'
 
 export const handlers = {
   shout,
+  parse_document: parseDocument,
 } as const
 
 export type Jobs = typeof handlers

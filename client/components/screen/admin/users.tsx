@@ -1,16 +1,9 @@
 import { Link } from 'react-router'
 
 import { AdminShell } from '@/components/screen/admin/admin-shell'
+import type { AdminUserDto } from '@/lib/api'
 
-export type AdminUserRow = {
-  id: string
-  email: string
-  name: string
-  role: string
-  createdAt: string
-}
-
-export function AdminUsersList({ users }: { users: AdminUserRow[] }) {
+export function AdminUsersList({ users }: { users: AdminUserDto[] }) {
   return (
     <AdminShell active="users">
       <h1 className="font-heading text-3xl tracking-tight">Users</h1>
@@ -45,7 +38,7 @@ export function AdminUsersList({ users }: { users: AdminUserRow[] }) {
   )
 }
 
-export function AdminUserDetail({ user }: { user: AdminUserRow }) {
+export function AdminUserDetail({ user }: { user: AdminUserDto }) {
   return (
     <AdminShell active="users">
       <p className="text-muted-foreground text-sm">

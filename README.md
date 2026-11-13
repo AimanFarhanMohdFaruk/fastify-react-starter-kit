@@ -18,19 +18,20 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 
 ## Approach (MVC)
 
-| Idea             | What it controls                                                             |
-| ---------------- | ---------------------------------------------------------------------------- |
-| Fat models       | `app/models/` — schema, invariants, queries, status transitions              |
-| Thin controllers | `app/controllers/<resource>/` — fluent `index.ts` + handlers/dto; JSON       |
-| Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)            |
-| Queue            | `app/queue.ts` — handlers registry, typed `enqueue`, pg-boss consumer               |
-| Services         | `app/services/` — cross-model, WORK, or upload-like policy                          |
+| Idea             | What it controls                                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Fat models       | `app/models/` — schema, invariants, queries                                               |
+| Thin controllers | `app/controllers/<resource>/` — `index` + `handlers` + `dto`; JSON                        |
+| Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)                         |
+| Queue            | `app/queue.ts` — stupid bus: `handlers`, typed `enqueue`, `registerWorkers` (pg-boss)     |
+| Services         | `app/services/` — cross-model, job bodies, upload policy                                  |
 
 **Rules of the road**
 
 - Models never import `controllers/`, `queue`, or `client/`.
 - Controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with `getData`.
-- Queue is not tied to a domain table; services own WORK / upload policy; controllers stay thin — no Drizzle / S3 directly.
+- Queue is not tied to a domain table — `enqueue(name, args)` only; job bodies live in services.
+- Controllers stay thin — no Drizzle / S3 / pg-boss directly (except the intentional `enqueue` call).
 - `client/` is presentation — no domain rules, no client-side business filter/sort; Admin via `isAdmin`, never `role === 'admin'`.
 - Schema change path: edit `app/models/schema.ts` → `npm run db:generate` → `npm run db:migrate`.
 - Full grow path: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md).
@@ -40,18 +41,25 @@ Architecture (processes, seams, request paths): [docs/architecture.md](docs/arch
 ## Layout
 
 ```
-cmd/web           # Fastify + /api + @fastify/vite
-cmd/worker        # pg-boss consumer
-app/models        # domain + Drizzle / Better Auth
-app/mail          # email transport + templates (Inbucket / Resend)
-app/services      # cross-model / WORK / upload policy
-app/controllers   # /api — <resource>/{index,handlers,dto}; posts + work + documents
-app/queue.ts      # handlers + enqueue + registerWorkers (stupid bus)
-db/migrate        # Drizzle migrations (generate + migrate)
-docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
-client/pages      # route folders (…/index.tsx → URL; getData + UI)
-client/components # design system (ui / layout / shell / motion / screen)
-client/styles     # Tailwind v4 + tweakcn theme (globals.css)
+cmd/
+  web/main.ts           # Fastify + /api + @fastify/vite
+  worker/main.ts        # calls registerWorkers()
+app/
+  controllers/
+    auth.ts             # Better Auth mount
+    posts/              # CRUD → models/post
+    documents/          # upload → services/upload*
+    work/               # demo enqueue → queue.enqueue
+  models/               # fat domain (no controllers/queue/client)
+  services/             # shout (job), upload/parse-document
+  queue.ts              # handlers + enqueue + getBoss + registerWorkers
+  db.ts · redis.ts · mail.ts · object-store.ts
+db/migrate              # Drizzle migrations
+docker/init             # compose first-boot SQL (CREATE EXTENSION vector)
+client/
+  pages/                # route folders (…/index.tsx → URL; getData + UI)
+  components/           # design system (ui / layout / shell / motion / screen)
+  styles/               # Tailwind v4 + tweakcn theme (globals.css)
 ```
 
 ### Design system
@@ -144,14 +152,17 @@ TLS: terminate at your cloud load balancer / Caddy in front of this compose, or 
 
 ### Environment (`.env.production`)
 
-| Variable           | Purpose                                                     |
-| ------------------ | ----------------------------------------------------------- |
-| `DATABASE_URL`     | Cloud Postgres URL (ssl usually required)                   |
-| `APP_URL`          | Public origin matching nginx (Better Auth `trustedOrigins`) |
-| `HOST_PORT`        | Host port mapped to nginx `80` (default `80`)               |
-| `MAIL_TRANSPORT`   | `resend` (or `log` / `smtp`)                                |
-| `MAIL_FROM`        | Verified sender for Resend                                  |
-| `RESEND_API_KEY`   | Resend API key when `MAIL_TRANSPORT=resend`                 |
+| Variable               | Purpose                                                     |
+| ---------------------- | ----------------------------------------------------------- |
+| `DATABASE_URL`         | Cloud Postgres URL (ssl usually required)                   |
+| `APP_URL`              | Public origin matching nginx (Better Auth `trustedOrigins`) |
+| `HOST_PORT`            | Host port mapped to nginx `80` (default `80`)               |
+| `BETTER_AUTH_URL`      | Auth base URL (defaults to `APP_URL` in compose)            |
+| `BETTER_AUTH_SECRET`   | Better Auth secret (required in production)                 |
+| `S3_*`                 | Object store for document uploads                           |
+| `MAIL_TRANSPORT`       | `resend` (or `log` / `smtp`)                                |
+| `MAIL_FROM`            | Verified sender for Resend                                  |
+| `RESEND_API_KEY`       | Resend API key when `MAIL_TRANSPORT=resend`                 |
 
 ### Manual / platform deploy (no Compose)
 

@@ -2,12 +2,14 @@ import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
-import { AdminUserDetail, type AdminUserRow } from '@/components/screen/admin/users'
+import { AdminUserDetail } from '@/components/screen/admin/users'
+import type { AdminUserDto } from '@/lib/api'
 
-type Data = { forbidden?: boolean; user?: AdminUserRow | null; notFound?: boolean }
+type Data = { forbidden?: boolean; user?: AdminUserDto | null; notFound?: boolean }
 
 export async function getData(ctx: { req: FastifyRequest; reply: FastifyReply }) {
   const { gateAdminPage } = await import('@app/controllers/auth')
+  const { adminUserDto } = await import('@app/controllers/admin/dto')
   const { getUserForAdmin } = await import('@app/models/admin')
   const gate = await gateAdminPage(ctx.req, ctx.reply)
   if (!gate.ok) return gate.kind === 'forbidden' ? { forbidden: true } : {}
@@ -17,15 +19,7 @@ export async function getData(ctx: { req: FastifyRequest; reply: FastifyReply })
     ctx.reply.code(404)
     return { notFound: true }
   }
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
-    },
-  }
+  return { user: adminUserDto(user) }
 }
 
 export function getMeta() {

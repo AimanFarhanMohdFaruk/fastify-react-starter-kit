@@ -22,9 +22,9 @@ Add `app/services/` when the use-case spans **more than one model** or model + q
 |------------------|--------------------|
 | Single-aggregate rules, CRUD, status machine | Orchestrate model A + model B |
 | Persist then return row | Persist row **and** enqueue / call another system |
-| Pure domain helpers | WORK functions called by the worker (`shout`, `parseDocument`, …) |
+| Pure domain helpers | Job bodies called by the worker (`shout`, `parseDocument`, …) |
 
-Example: `shout` is a service with **no** model — the queue stays stupid. `uploadDocument` is a service (store + model + parse).
+Example: `shout` is a service with **no** model — the queue stays stupid. `uploadDocument` is a service (store + model + enqueue `parse_document`).
 
 **Upload / policy-heavy intake:** own limits, accept strings, and typed failures in the service (see `upload-document.ts`: `DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, `UploadDocumentError`). Multipart boot, harness, UI, and handlers **import** those — do not scatter magic numbers or scrape `Error.message` for HTTP status.
 
@@ -89,7 +89,8 @@ Stupid bus — **no domain row required** to enqueue.
 // 1) add to queue.ts handlers:  parse_document: parseDocument,
 // 2) call site is typed:
 await enqueue('shout', { message: 'hi', userId })
-// worker → handlers.shout → services/shout
+await enqueue('parse_document', { documentId })
+// worker → handlers[name] → services/*
 ```
 
 **Done when:** `npm run worker` processes a message (log / side effect). Domain status only if a product record already needs it.
@@ -119,7 +120,7 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 ```
 client/       → pages + design system; getData may call models/dto/auth; screens must not own domain
 controllers/  → /api HTTP only (folder per resource)
-services/     → cross-model / WORK / policy-heavy intake
+services/     → cross-model / job bodies / policy-heavy intake
 queue.ts      → handlers + enqueue + registerWorkers (stupid bus)
 db / mail / object-store / redis → other process infra singletons
 models/       → domain + DB; never import adapters above

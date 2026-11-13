@@ -69,7 +69,7 @@ describe('uploadDocument', () => {
         contentType: 'text/markdown',
         body: Readable.from(['# Hello']),
       },
-      { objectStore: store },
+      { objectStore: store, parse: 'sync' },
     )
 
     assert.equal(doc.status, 'ready')
@@ -96,6 +96,7 @@ describe('uploadDocument', () => {
       },
       {
         objectStore: store,
+        parse: 'sync',
         parsePdf: async () => ({ pages: [{ text: 'Page one' }, { text: 'Page two' }] }),
       },
     )

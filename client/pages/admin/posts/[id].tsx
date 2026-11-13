@@ -2,14 +2,12 @@ import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
-import {
-  AdminPostDetail,
-  type AdminPostRow,
-} from '@/components/screen/admin/posts'
+import { AdminPostDetail } from '@/components/screen/admin/posts'
+import type { AdminPostDto } from '@/lib/api'
 
 type Data = {
   forbidden?: boolean
-  post?: AdminPostRow | null
+  post?: AdminPostDto | null
   notFound?: boolean
 }
 
@@ -18,27 +16,18 @@ export async function getData(ctx: {
   reply: FastifyReply
 }) {
   const { gateAdminPage } = await import('@app/controllers/auth')
-  const user = await gateAdminPage(ctx.req, ctx.reply)
-  if (!user) return { forbidden: true }
+  const { adminPostDetailDto } = await import('@app/controllers/admin/dto')
+  const { getPostForAdmin } = await import('@app/models/admin')
+  const gate = await gateAdminPage(ctx.req, ctx.reply)
+  if (!gate.ok) return gate.kind === 'forbidden' ? { forbidden: true } : {}
 
   const id = (ctx.req.params as { id?: string }).id
   if (!id) return { notFound: true }
 
-  const { getPostForAdmin } = await import('@app/models/admin')
   const row = await getPostForAdmin(id)
   if (!row) return { notFound: true }
 
-  return {
-    post: {
-      id: row.id,
-      title: row.title,
-      body: row.body,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-      userId: row.userId,
-      userEmail: row.userEmail,
-    },
-  }
+  return { post: adminPostDetailDto(row) }
 }
 
 export function getMeta() {
