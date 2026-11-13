@@ -1,8 +1,8 @@
 import 'dotenv/config'
-import { registerReportWorker } from '../../app/jobs/report'
-import { getBoss } from '../../app/jobs/queue'
+import { getBoss } from '../../app/queue'
+import { registerWorkers } from '../../app/workers/dispatch'
 
 console.log('[worker] starting…')
 await getBoss()
-await registerReportWorker()
-console.log('[worker] listening on queue report')
+await registerWorkers()
+console.log('[worker] listening on queue default')

@@ -4,7 +4,7 @@ Research note for the personal starter-kit dashboard enqueue + status refresh.
 
 ## Current behavior
 
-1. `POST /jobs` enqueues, then **redirects** to `GET /dashboard?flash=…` (historical Inertia controllers; kit now uses `app/controllers/reports/`).
+1. `POST /jobs` enqueues, then **redirects** to `GET /dashboard?flash=…` (historical Inertia; kit now uses posts CRUD + `/api/work` enqueue).
 2. Dashboard polls with `router.get('/dashboard', …, { only: ['jobs'], preserveState: true, preserveScroll: true })` (historical Inertia page; kit now uses `client/pages/dashboard/`).
 
 The **scroll-to-top** feeling comes mainly from the **enqueue visit**, not the poll:
@@ -63,9 +63,9 @@ On success (with A/B/C), request only the props that changed. Server still must 
 
 ### E. JSON fragment + local React state
 
-`POST /api/reports` → `{ report }`; `GET /api/reports` polled; update `useState` without Inertia visits. No scroll side effects. Splits a second transport beside Inertia props (acceptable for a widget; fights “one page props” purity).
+`POST /api/…` → JSON; `GET /api/…` polled; update `useState` without Inertia visits. No scroll side effects. Splits a second transport beside Inertia props (acceptable for a widget; fights “one page props” purity).
 
-**Fit:** if report list becomes a dense live widget.
+**Fit:** if a list becomes a dense live widget.
 
 ### F. SSE / WebSocket push
 
@@ -83,4 +83,4 @@ Polling every 1.5s with `preserveScroll: true` is already the right Inertia-shap
 
 ## Adopted (kit migration)
 
-The kit left Inertia for **`@fastify/react`** and adopted **option E**: `POST /api/reports` + poll `GET /api/reports` into React state on the dashboard page. No PRG, no scroll jump from page visits. See `client/pages/dashboard/index.tsx` and `app/controllers/reports/`.
+The kit left Inertia for **`@fastify/react`** and adopted **option E**-style `/api` + React state on the dashboard. Posts use full CRUD via `/api/posts`; background work is fire-and-forget via `/api/work` (stupid queue — no domain job row). See `client/pages/dashboard/index.tsx`.

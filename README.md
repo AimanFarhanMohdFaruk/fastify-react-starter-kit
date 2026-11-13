@@ -23,14 +23,14 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 | Fat models       | `app/models/` — schema, invariants, queries, status transitions              |
 | Thin controllers | `app/controllers/<resource>/` — fluent `index.ts` + handlers/dto; JSON       |
 | Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)            |
-| Jobs             | `app/jobs/` + `cmd/worker` — pg-boss adapters; work stays in models/services |
-| Services         | `app/services/` — **only** when a use-case spans models or model + queue     |
+| Queue            | `app/queue.ts` + `app/workers/` — stupid `enqueue(name, args)` → handlers → services |
+| Services         | `app/services/` — cross-model, WORK, or upload-like policy                         |
 
 **Rules of the road**
 
-- Models never import `controllers/`, `jobs/`, or `client/`.
+- Models never import `controllers/`, `workers/`, or `client/`.
 - Controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with `getData`.
-- Services own cross-model flows and upload-like policy (limits / typed errors); controllers stay thin — no Drizzle / pg-boss / S3 directly.
+- Queue is not tied to a domain table; services own WORK / upload policy; controllers stay thin — no Drizzle / S3 directly.
 - `client/` is presentation — no domain rules, no client-side business filter/sort; Admin via `isAdmin`, never `role === 'admin'`.
 - Schema change path: edit `app/models/schema.ts` → `npm run db:generate` → `npm run db:migrate`.
 - Full grow path: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md).
@@ -44,9 +44,10 @@ cmd/web           # Fastify + /api + @fastify/vite
 cmd/worker        # pg-boss consumer
 app/models        # domain + Drizzle / Better Auth
 app/mail          # email transport + templates (Inbucket / Resend)
-app/services      # cross-model / enqueue / upload policy
-app/controllers   # /api — <resource>/{index,handlers,dto}; see jobs/
-app/jobs          # thin boss.work adapters (queue client → app/queue.ts)
+app/services      # cross-model / WORK / upload policy
+app/controllers   # /api — <resource>/{index,handlers,dto}; posts + work + documents
+app/queue.ts      # getBoss + enqueue(name, args)
+app/workers       # dispatch + handlers map
 db/migrate        # Drizzle migrations (generate + migrate)
 docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
 client/pages      # route folders (…/index.tsx → URL; getData + UI)
@@ -173,4 +174,4 @@ NODE_ENV=production npm run start:worker
 ## Notes
 
 - Local magic links land in **Inbucket** (`http://localhost:8025`) when `MAIL_TRANSPORT=smtp`. Use `MAIL_TRANSPORT=log` to print to the web console instead.
-- Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*` and `/api/reports`. Report list live-updates by polling `GET /api/reports`.
+- Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*`, `/api/posts` (CRUD), `/api/work` (enqueue), `/api/documents`.

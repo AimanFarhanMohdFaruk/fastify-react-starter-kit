@@ -47,7 +47,7 @@ function ProductPreview({ className }: { className?: string }) {
             <span className="text-sm tracking-tight">starter</span>
           </div>
           <div className="space-y-2">
-            {['Overview', 'Reports', 'Auth', 'Models'].map((item, i) => (
+            {['Overview', 'Posts', 'Auth', 'Models'].map((item, i) => (
               <div
                 key={item}
                 className={cn(
@@ -63,40 +63,25 @@ function ProductPreview({ className }: { className?: string }) {
         <div className="min-w-0 flex-1 p-4 sm:p-6">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <p className="text-muted-foreground text-xs">Background reports</p>
-              <p className="mt-1 font-heading text-2xl tracking-tight">
-                report
-              </p>
+              <p className="text-muted-foreground text-xs">CRUD posts</p>
+              <p className="mt-1 font-heading text-2xl tracking-tight">posts</p>
             </div>
             <div className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs">
-              Enqueue
+              Create
             </div>
           </div>
           <div className="space-y-2">
             {[
-              { id: 'rpt_8f2a', status: 'completed', tone: 'text-foreground' },
-              {
-                id: 'rpt_3c91',
-                status: 'running',
-                tone: 'text-muted-foreground',
-              },
-              {
-                id: 'rpt_a01e',
-                status: 'queued',
-                tone: 'text-muted-foreground',
-              },
-              { id: 'job_77bd', status: 'completed', tone: 'text-foreground' },
+              { id: 'Hello kit', meta: 'just now' },
+              { id: 'Shipping notes', meta: '2m ago' },
+              { id: 'Draft idea', meta: 'yesterday' },
             ].map((row) => (
               <div
                 key={row.id}
                 className="flex items-center justify-between border-border border-b py-2.5 last:border-0"
               >
-                <span className="font-mono text-muted-foreground text-xs">
-                  {row.id}
-                </span>
-                <span className={cn('text-xs capitalize', row.tone)}>
-                  {row.status}
-                </span>
+                <span className="text-sm">{row.id}</span>
+                <span className="text-muted-foreground text-xs">{row.meta}</span>
               </div>
             ))}
           </div>

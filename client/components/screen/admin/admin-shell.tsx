@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const nav = [
   { id: 'users' as const, label: 'Users', to: '/admin/users' },
-  { id: 'reports' as const, label: 'Reports', to: '/admin/reports' },
+  { id: 'posts' as const, label: 'Posts', to: '/admin/posts' },
 ]
 
 export function AdminShell({
@@ -15,7 +15,7 @@ export function AdminShell({
   active,
 }: {
   children: React.ReactNode
-  active: 'users' | 'reports'
+  active: 'users' | 'posts'
 }) {
   return (
     <div className="flex min-h-dvh bg-background">

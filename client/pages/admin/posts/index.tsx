@@ -3,25 +3,26 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
 import {
-  AdminReportsList,
-  type AdminReportRow,
-} from '@/components/screen/admin/reports'
+  AdminPostsList,
+  type AdminPostRow,
+} from '@/components/screen/admin/posts'
 
-type Data = { forbidden?: boolean; reports?: AdminReportRow[] }
+type Data = { forbidden?: boolean; posts?: AdminPostRow[] }
 
 export async function getData(ctx: {
   req: FastifyRequest
   reply: FastifyReply
 }) {
   const { gateAdminPage } = await import('@app/controllers/auth')
-  const { listReportsForAdmin } = await import('@app/models/admin')
-  const gate = await gateAdminPage(ctx.req, ctx.reply)
-  if (!gate.ok) return { forbidden: true }
-  const rows = await listReportsForAdmin()
+  const user = await gateAdminPage(ctx.req, ctx.reply)
+  if (!user) return { forbidden: true }
+
+  const { listPostsForAdmin } = await import('@app/models/admin')
+  const rows = await listPostsForAdmin()
   return {
-    reports: rows.map((r) => ({
+    posts: rows.map((r) => ({
       id: r.id,
-      status: r.status,
+      title: r.title,
       createdAt: r.createdAt.toISOString(),
       userId: r.userId,
       userEmail: r.userEmail,
@@ -30,11 +31,11 @@ export async function getData(ctx: {
 }
 
 export function getMeta() {
-  return { title: 'Admin · Reports' }
+  return { title: 'Admin · Posts' }
 }
 
-export default function AdminReportsPage() {
+export default function AdminPostsPage() {
   const { data } = useRouteContext() as { data: Data }
   if (data.forbidden) return <AdminForbidden />
-  return <AdminReportsList reports={data.reports ?? []} />
+  return <AdminPostsList posts={data.posts ?? []} />
 }

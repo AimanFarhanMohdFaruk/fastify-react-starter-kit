@@ -8,7 +8,8 @@ import multipart from '@fastify/multipart'
 import FastifyVite from '@fastify/vite'
 import { registerAuthRoutes } from '../../app/controllers/auth'
 import { registerDocumentRoutes } from '../../app/controllers/documents'
-import { registerReportRoutes } from '../../app/controllers/reports'
+import { registerPostRoutes } from '../../app/controllers/posts'
+import { registerWorkRoutes } from '../../app/controllers/work'
 import { DOCUMENT_MAX_BYTES } from '../../app/services/upload-document'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -49,7 +50,8 @@ async function main() {
   })
 
   await registerAuthRoutes(app)
-  await registerReportRoutes(app)
+  await registerPostRoutes(app)
+  await registerWorkRoutes(app)
   await registerDocumentRoutes(app)
 
   await app.register(FastifyVite, {

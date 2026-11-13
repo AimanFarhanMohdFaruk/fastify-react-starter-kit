@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import { beforeEach, describe, test } from 'node:test'
 import {
-  getReportForAdmin,
+  getPostForAdmin,
   getUserForAdmin,
   isAdmin,
-  listReportsForAdmin,
+  listPostsForAdmin,
   listUsersForAdmin,
   promoteUserToAdmin,
   requireAdmin,
 } from '../../app/models/admin'
-import { createReport } from '../../app/models/report'
+import { createPost } from '../../app/models/post'
 import { createSessionUser } from '../harness/auth'
 import { truncateAppTables } from '../harness/db'
 
@@ -91,28 +91,32 @@ describe('admin directory queries', () => {
     assert.equal(row.id, user.id)
   })
 
-  test('listReportsForAdmin includes reports from all users', async () => {
+  test('listPostsForAdmin includes posts from all users', async () => {
     const a = await createSessionUser({ email: 'owner-a@example.com' })
     const b = await createSessionUser({ email: 'owner-b@example.com' })
-    const reportA = await createReport(a.user.id, 'from-a')
-    const reportB = await createReport(b.user.id, 'from-b')
+    const postA = await createPost(a.user.id, { title: 'from-a' })
+    const postB = await createPost(b.user.id, { title: 'from-b' })
 
-    const rows = await listReportsForAdmin()
+    const rows = await listPostsForAdmin()
     assert.equal(rows.length, 2)
     const emails = new Set(rows.map((r) => r.userEmail))
     assert.ok(emails.has('owner-a@example.com'))
     assert.ok(emails.has('owner-b@example.com'))
-    assert.ok(rows.some((r) => r.id === reportA.id))
-    assert.ok(rows.some((r) => r.id === reportB.id))
+    assert.ok(rows.some((r) => r.id === postA.id))
+    assert.ok(rows.some((r) => r.id === postB.id))
   })
 
-  test('getReportForAdmin returns payload and user email', async () => {
-    const { user } = await createSessionUser({ email: 'report-owner@example.com' })
-    const report = await createReport(user.id, 'secret-payload')
-    const row = await getReportForAdmin(report.id)
+  test('getPostForAdmin returns title and user email', async () => {
+    const { user } = await createSessionUser({ email: 'post-owner@example.com' })
+    const post = await createPost(user.id, {
+      title: 'Secret',
+      body: 'payload',
+    })
+    const row = await getPostForAdmin(post.id)
     assert.ok(row)
-    assert.equal(row.payload, 'secret-payload')
-    assert.equal(row.userEmail, 'report-owner@example.com')
+    assert.equal(row.title, 'Secret')
+    assert.equal(row.body, 'payload')
+    assert.equal(row.userEmail, 'post-owner@example.com')
     assert.equal(row.userId, user.id)
   })
 })

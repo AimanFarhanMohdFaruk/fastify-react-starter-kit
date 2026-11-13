@@ -20,29 +20,29 @@ Boot order on web matters: register **API controllers before** `FastifyVite`, so
 ```
 cmd/web
   ├── cookie + formbody + multipart
-  ├── registerAuthRoutes / registerJobRoutes / registerDocumentRoutes   → /api/*
+  ├── registerAuthRoutes / registerPostRoutes / registerWorkRoutes / registerDocumentRoutes   → /api/*
   └── FastifyVite + @fastify/react            → HTML pages
 ```
 
 ## Layers (MVC)
 
-Dependency rule: **inward only**. Models never import controllers, jobs, or `client/`.
+Dependency rule: **inward only**. Models never import controllers, workers, or `client/`.
 
 ```
 client/pages  ──getData──►  app/controllers | app/models | app/services
-client/screen ──fetch────►  /api ──► controllers ──► models | services
-cmd/worker    ──dequeue──►  app/jobs ──► models | services
+client/screen ──fetch────►  /api ──► controllers ──► models | services | enqueue
+cmd/worker    ──dequeue──►  app/workers ──► services (optional models)
 ```
 
 | Layer | Path | Owns |
 |-------|------|------|
-| **Models** | `app/models/` | Schema, invariants, queries, status transitions, Better Auth tables |
-| **Services** | `app/services/` | Cross-model or model + queue / external side effect; upload-like policy + typed failures |
+| **Models** | `app/models/` | Schema, invariants, queries, Better Auth tables |
+| **Services** | `app/services/` | Cross-model or external side effect; upload policy; WORK called by workers |
 | **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
-| **Jobs** | `app/jobs/` | Thin `boss.work` adapters → model/service (not the pg-boss client long-term) |
+| **Workers** | `app/workers/` | Stupid delivery: `dispatch` → `handlers[name](args)` → service |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
 
-Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, and the pg-boss client (target `app/queue.ts`; today still `app/jobs/queue.ts`). Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly.
+Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, `app/queue.ts` (`getBoss` / `enqueue`). Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly — except the intentional thin `enqueue` call from a work controller/service.
 
 ## Page request path (HTML)
 
@@ -60,25 +60,29 @@ Screens under `client/components/screen/` receive props from the page. They neve
 
 ## API request path (JSON)
 
-Mutations, polls, and Better Auth stay on Fastify:
+Mutations and Better Auth stay on Fastify:
 
 | Surface | Example |
 |---------|---------|
 | Better Auth | `/api/auth/*` (handler in `app/controllers/auth`) |
-| App JSON | `/api/reports` (list / enqueue), `/api/documents` (upload / list / get) |
+| App JSON | `/api/posts` (CRUD), `/api/work` (enqueue), `/api/documents` (upload / list / get) |
 
 Typical controller: `requireSession` on the route → parse → one model or service → `*Dto` → `reply.send`.
 
-Resource JSON for Report / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
+Resource JSON for Post / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
 
 Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits, UI accept, and handler status mapping import from there.
 
-## Jobs path
+## Queue path (stupid bus)
 
-1. Service (e.g. `enqueueReport`) persists a row via the model, then `boss.send` via the queue client.
-2. Worker process starts the queue client and registers `boss.work` in `app/jobs/` (thin adapter).
-3. Adapter calls model work (status transitions, long-running logic).
-4. UI that needs freshness polls `GET /api/…` after SSR seeded the list (same `*Dto` as the poll).
+The queue is **not** coupled to a domain table. pg-boss holds delivery state (like Redis in Sidekiq); you do not model `pgboss.*`.
+
+1. Caller `enqueue(name, args)` via `app/queue.ts` (e.g. from `POST /api/work`).
+2. Worker registers `registerWorkers()` — one `boss.work` on `default`.
+3. Dispatch looks up `handlers[name]` and calls the service with `args`.
+4. Service may touch models if the product needs it — **not required** to enqueue.
+
+Demo: `shout` sleeps + logs. No row.
 
 ## Server-only boundary (`app/` ↔ client bundle)
 
@@ -91,7 +95,7 @@ This kit’s answer is `vite.app-server-only.ts`, registered in `vite.config.ts`
 | **ssr** | Real modules (DB, auth, domain) |
 | **client** | Synthetic stubs with the same export names |
 
-You write clean imports — `await import('@app/models/report')` — no `?server` query, no `server-imports.d.ts`. Aliases:
+You write clean imports — `await import('@app/models/post')` — no `?server` query, no `server-imports.d.ts`. Aliases:
 
 - Vite + tsconfig: `@app/*` → `app/*`
 - Vite + tsconfig: `@/*` → `client/*`
@@ -116,6 +120,7 @@ The browser uses the Better Auth client against the same `/api/auth/*` routes.
 - No Next App Router, RSC, or framework-owned data cache layer
 - No domain rules or business filter/sort in `client/`
 - No job consumer inside `cmd/web`
+- No domain row required just to enqueue background work
 - No second CSS system beyond Tailwind v4 + tweakcn tokens in `client/styles/`
 
 ## Map of docs

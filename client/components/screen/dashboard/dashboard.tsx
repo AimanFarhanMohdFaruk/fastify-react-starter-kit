@@ -1,24 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { AppShell } from '@/components/shell/app-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
-  enqueueReport,
-  fetchReports,
+  createPost,
+  deletePost,
+  enqueueShout,
+  updatePost,
   uploadDocument,
   type DocumentDto,
-  type ReportDto,
+  type PostDto,
 } from '@/lib/api'
-
-const ACTIVE = new Set(['queued', 'running'])
 
 export type DashboardProps = {
   email: string
   isAdmin: boolean
-  reports: ReportDto[]
+  posts: PostDto[]
   documents: DocumentDto[]
   documentAccept: string
   documentMaxBytes: number
@@ -27,38 +28,23 @@ export type DashboardProps = {
 export function Dashboard({
   email,
   isAdmin,
-  reports: initialReports,
+  posts: initialPosts,
   documents: initialDocuments,
   documentAccept,
   documentMaxBytes,
 }: DashboardProps) {
-  const [reports, setReports] = useState<ReportDto[]>(initialReports)
+  const [posts, setPosts] = useState<PostDto[]>(initialPosts)
   const [documents, setDocuments] = useState<DocumentDto[]>(initialDocuments)
-  const [payload, setPayload] = useState('')
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [shoutMessage, setShoutMessage] = useState('')
   const [flash, setFlash] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploadBusy, setUploadBusy] = useState(false)
-
-  const hasActiveReports = reports.some((r) => ACTIVE.has(r.status))
-
-  useEffect(() => {
-    if (!hasActiveReports) return
-    let cancelled = false
-    const tick = async () => {
-      try {
-        const next = await fetchReports()
-        if (!cancelled) setReports(next)
-      } catch {
-        // keep last good list
-      }
-    }
-    void tick()
-    const id = window.setInterval(() => void tick(), 1500)
-    return () => {
-      cancelled = true
-      window.clearInterval(id)
-    }
-  }, [hasActiveReports])
+  const [workBusy, setWorkBusy] = useState(false)
 
   return (
     <AppShell email={email} isAdmin={isAdmin}>
@@ -66,7 +52,7 @@ export function Dashboard({
         <div>
           <h1 className="font-heading font-bold text-3xl tracking-tight">Dashboard</h1>
           <p className="mt-1 text-muted-foreground text-sm">
-            Enqueue reports and upload documents.
+            Posts CRUD, fire-and-forget work, and document upload.
           </p>
         </div>
 
@@ -77,56 +63,198 @@ export function Dashboard({
         ) : null}
 
         <section className="space-y-3">
-          <h2 className="font-semibold text-lg">Reports</h2>
+          <h2 className="font-semibold text-lg">Posts</h2>
           <form
-            className="flex flex-col gap-3 sm:flex-row"
+            className="space-y-3"
             onSubmit={async (e) => {
               e.preventDefault()
               setBusy(true)
               setFlash(null)
               try {
-                const report = await enqueueReport(payload)
-                setReports((prev) => [report, ...prev])
-                setPayload('')
-                setFlash('Report queued — run npm run worker or npm run dev:all')
+                const post = await createPost({ title, body })
+                setPosts((prev) => [post, ...prev])
+                setTitle('')
+                setBody('')
+                setFlash('Post created')
               } catch (err) {
-                setFlash(err instanceof Error ? err.message : 'Enqueue failed')
+                setFlash(err instanceof Error ? err.message : 'Create failed')
               } finally {
                 setBusy(false)
               }
             }}
           >
             <Input
-              className="flex-1"
-              value={payload}
-              onChange={(e) => setPayload(e.target.value)}
-              placeholder="report payload"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
               required
             />
+            <Textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Body (optional)"
+              rows={3}
+            />
             <Button type="submit" disabled={busy} loading={busy}>
-              Enqueue
+              Create post
             </Button>
           </form>
-          {reports.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No reports yet.</p>
+          {posts.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No posts yet.</p>
           ) : (
             <ul className="space-y-3">
-              {reports.map((r) => (
+              {posts.map((p) => (
                 <li
-                  key={r.id}
+                  key={p.id}
                   className="rounded-lg border border-border bg-card px-4 py-3 text-card-foreground"
                 >
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{r.status}</Badge>
-                    <span className="text-sm">{r.payload}</span>
-                  </div>
-                  {r.result ? (
-                    <p className="mt-2 text-muted-foreground text-xs">{r.result}</p>
-                  ) : null}
+                  {editingId === p.id ? (
+                    <form
+                      className="space-y-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        setBusy(true)
+                        setFlash(null)
+                        try {
+                          const next = await updatePost(p.id, {
+                            title: editTitle,
+                            body: editBody,
+                          })
+                          setPosts((prev) =>
+                            prev.map((row) => (row.id === p.id ? next : row)),
+                          )
+                          setEditingId(null)
+                          setFlash('Post updated')
+                        } catch (err) {
+                          setFlash(
+                            err instanceof Error ? err.message : 'Update failed',
+                          )
+                        } finally {
+                          setBusy(false)
+                        }
+                      }}
+                    >
+                      <Input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        required
+                      />
+                      <Textarea
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm" disabled={busy} loading={busy}>
+                          Save
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-sm">{p.title}</p>
+                          {p.body ? (
+                            <p className="mt-1 whitespace-pre-wrap text-muted-foreground text-xs">
+                              {p.body}
+                            </p>
+                          ) : null}
+                          <p className="mt-2 text-muted-foreground text-xs">
+                            {p.updatedAt}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingId(p.id)
+                              setEditTitle(p.title)
+                              setEditBody(p.body)
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={busy}
+                            onClick={async () => {
+                              setBusy(true)
+                              setFlash(null)
+                              try {
+                                await deletePost(p.id)
+                                setPosts((prev) => prev.filter((row) => row.id !== p.id))
+                                setFlash('Post deleted')
+                              } catch (err) {
+                                setFlash(
+                                  err instanceof Error
+                                    ? err.message
+                                    : 'Delete failed',
+                                )
+                              } finally {
+                                setBusy(false)
+                              }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="font-semibold text-lg">Background work</h2>
+          <p className="text-muted-foreground text-sm">
+            Stupid queue — name + args, no domain row. Watch the worker log.
+          </p>
+          <form
+            className="flex flex-col gap-3 sm:flex-row"
+            onSubmit={async (e) => {
+              e.preventDefault()
+              setWorkBusy(true)
+              setFlash(null)
+              try {
+                const result = await enqueueShout(shoutMessage)
+                setShoutMessage('')
+                setFlash(
+                  `Enqueued ${result.name} (${result.jobId ?? 'ok'}) — run npm run worker`,
+                )
+              } catch (err) {
+                setFlash(err instanceof Error ? err.message : 'Enqueue failed')
+              } finally {
+                setWorkBusy(false)
+              }
+            }}
+          >
+            <Input
+              className="flex-1"
+              value={shoutMessage}
+              onChange={(e) => setShoutMessage(e.target.value)}
+              placeholder="message for shout job"
+              required
+            />
+            <Button type="submit" disabled={workBusy} loading={workBusy}>
+              Enqueue shout
+            </Button>
+          </form>
         </section>
 
         <section className="space-y-3">

@@ -8,7 +8,7 @@ Put domain + persistence in `app/models/`.
 
 - Schema / columns → `app/models/schema.ts` (Drizzle).
 - Persist the change → `npm run db:generate` (writes under `db/migrate/` + journal), then `npm run db:migrate` (Drizzle migrator / `__drizzle_migrations`). Do not hand-author one-off SQL in place of generate; the only intentional hand edit in the initial migration is `CREATE EXTENSION vector`.
-- Invariants, queries, status transitions → functions on the model module (e.g. `createX`, `listXForUser`, `runXWork`).
+- Invariants, queries, CRUD → functions on the model module (e.g. `createX`, `listXForUser`, `updateXForUser`).
 - Auth tables stay Better Auth–shaped; app domain tables sit beside them in the same schema module.
 - Admin checks → `isAdmin` / `requireAdmin` in `app/models/admin` — never `user.role === 'admin'` (roles may be comma-separated).
 
@@ -21,10 +21,10 @@ Add `app/services/` when the use-case spans **more than one model** or model + q
 | Put in **model** | Put in **service** |
 |------------------|--------------------|
 | Single-aggregate rules, CRUD, status machine | Orchestrate model A + model B |
-| Persist then return row | Persist row **and** enqueue pg-boss / call another system |
-| Pure domain helpers | Multi-step workflows that would otherwise fatten a controller |
+| Persist then return row | Persist row **and** enqueue / call another system |
+| Pure domain helpers | WORK functions called by the worker (`shout`, `parseDocument`, …) |
 
-Example in this kit: `enqueueReport` creates the row (model) then `boss.send` (queue) — that’s a service.
+Example: `shout` is a service with **no** model — the queue stays stupid. `uploadDocument` is a service (store + model + parse).
 
 **Upload / policy-heavy intake:** own limits, accept strings, and typed failures in the service (see `upload-document.ts`: `DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, `UploadDocumentError`). Multipart boot, harness, UI, and handlers **import** those — do not scatter magic numbers or scrape `Error.message` for HTTP status.
 
@@ -32,7 +32,7 @@ Example in this kit: `enqueueReport` creates the row (model) then `boss.send` (q
 
 ## 3. Thin controller (`/api`)
 
-Add `app/controllers/<resource>/` and register it from `cmd/web/main.ts` **and** `test/harness/app.ts` **before** `FastifyVite`. Reference: `app/controllers/reports/`.
+Add `app/controllers/<resource>/` and register it from `cmd/web/main.ts` **and** `test/harness/app.ts` **before** `FastifyVite`. Reference: `app/controllers/posts/` (CRUD) or `app/controllers/work/` (enqueue).
 
 ```
 app/controllers/<resource>/
@@ -43,12 +43,15 @@ app/controllers/<resource>/
 
 **Always** use the folder layout — even for a single route. No flat `app/controllers/<resource>.ts` route modules. Exception: `app/controllers/auth.ts` (Better Auth catch-all, `getSessionUser`, `requireSession`, `sessionUser`, `gateAdminPage`).
 
-`index.ts` example:
+`index.ts` example (CRUD):
 
 ```ts
-export async function registerReportRoutes(app: FastifyInstance) {
-  app.get('/api/reports', { preHandler: requireSession }, list)
-  app.post('/api/reports', { preHandler: requireSession }, create)
+export async function registerPostRoutes(app: FastifyInstance) {
+  app.get('/api/posts', { preHandler: requireSession }, list)
+  app.post('/api/posts', { preHandler: requireSession }, create)
+  app.get('/api/posts/:id', { preHandler: requireSession }, show)
+  app.patch('/api/posts/:id', { preHandler: requireSession }, update)
+  app.delete('/api/posts/:id', { preHandler: requireSession }, destroy)
 }
 ```
 
@@ -63,26 +66,33 @@ Controller may:
 
 1. Auth / session gate (prefer route `preHandler`)  
 2. Parse body/query/params (or dto parsers)  
-3. Call **one** model or service  
+3. Call **one** model or service (or `enqueue`)  
 4. Map result → **JSON** via dto (`reply.send` / status codes)
 
 Controller must not:
 
 - Encode business rules (validation beyond “required field present” belongs in the model)
-- Talk to Drizzle or pg-boss / S3 / mail / Redis directly
+- Talk to Drizzle or S3 / mail / Redis directly (pg-boss only via `enqueue` from `app/queue`)
 - Render HTML pages (those live in `client/pages` via `getData`)
 - Hand-roll a second JSON shape that diverges from `dto.ts`
 
 **Done when:** a curl against `/api/…` reaches the model/service and returns the right JSON.
 
-## 4. Jobs (if async)
+## 4. Queue work (if async)
 
-- **Infra:** pg-boss client belongs with other process singletons (`app/db`, `app/mail`, …) — intended module `app/queue.ts` (`getBoss`). Do not treat the client as “part of a job adapter.” (Today the client still lives at `app/jobs/queue.ts`; move toward `app/queue.ts` when touching queue code.)
-- **Adapters:** `app/jobs/<name>.ts` — thin `boss.work` → model/service only. Share queue **name + payload type** with the enqueue service.
-- Long work / status updates → `app/models/` (e.g. `runReportWork`).
-- Register workers from `cmd/worker/main.ts` only — never run the consumer inside `cmd/web`.
+Stupid bus — **no domain row required** to enqueue.
 
-**Done when:** `npm run worker` processes a message and the model row reflects success/failure.
+- **Infra:** `app/queue.ts` — `getBoss` + `enqueue(name, args)` (peer of `db` / `mail`).
+- **Handlers:** register in `app/workers/handlers.ts` — `name → service`.
+- **Delivery:** `app/workers/dispatch.ts` — one `boss.work` → look up handler.
+- Register from `cmd/worker/main.ts` only — never run the consumer inside `cmd/web`.
+
+```ts
+await enqueue('shout', { message: 'hi', userId })
+// worker → handlers.shout → services/shout
+```
+
+**Done when:** `npm run worker` processes a message (log / side effect). Domain status only if a product record already needs it.
 
 ## 5. Page last
 
@@ -109,13 +119,13 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 ```
 client/       → pages + design system; getData may call models/dto/auth; screens must not own domain
 controllers/  → /api HTTP only (folder per resource)
-services/     → cross-model / model+queue / policy-heavy intake
-jobs/         → dequeue adapters only (not the boss client long-term)
+services/     → cross-model / WORK / policy-heavy intake
+workers/      → dispatch + name→handler map (not the boss client)
 queue / db / mail / object-store / redis → process infra singletons
 models/       → domain + DB; never import adapters above
 ```
 
 ## Naming
 
-- Controllers named by resource folder (`jobs/`, `documents/`) — not grab-bags; not flat `*.ts` route modules.
+- Controllers named by resource folder (`posts/`, `documents/`, `work/`) — not grab-bags; not flat `*.ts` route modules.
 - One `register*Routes(app)` export from the controller package (`index.ts`); `cmd/web` boots API then Vite.

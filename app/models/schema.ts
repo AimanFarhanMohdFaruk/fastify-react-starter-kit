@@ -58,16 +58,16 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at').defaultNow(),
 })
 
-export const reports = pgTable('reports', {
+/** Simple user-owned Post — kit CRUD demo (not tied to the queue). */
+export const posts = pgTable('posts', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  payload: text('payload').notNull(),
-  status: text('status').notNull().default('queued'),
-  result: text('result'),
+  title: text('title').notNull(),
+  body: text('body').notNull().default(''),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  finishedAt: timestamp('finished_at'),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 /** Uploaded kit docs — bytes in object store, metadata (+ later extracted text) here. */
@@ -86,5 +86,5 @@ export const documents = pgTable('documents', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export type Report = typeof reports.$inferSelect
+export type Post = typeof posts.$inferSelect
 export type Document = typeof documents.$inferSelect

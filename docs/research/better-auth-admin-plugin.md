@@ -50,7 +50,7 @@ First-party bootstrap options:
 
 - **Ban / unban / impersonation / revoke sessions** — plugin capabilities; leave columns unused; no admin UI for them in v1 (aligns with map fog/out of scope).
 - **Custom access-control (`ac` / extra roles)** — defaults `admin`/`user` are enough until fog clears.
-- **`/api/admin` Better Auth HTTP admin routes for the kit’s users/reports lists** — those lists are **app** domain (`reports`, user directory via Drizzle/`getData`), not Better Auth’s admin user-management UI. Plugin is for **role identity + future user-mgmt APIs**, not a substitute for admin pages.
+- **`/api/admin` Better Auth HTTP admin routes for the kit’s users/posts lists** — those lists are **app** domain (`posts`, user directory via Drizzle/`getData`), not Better Auth’s admin user-management UI. Plugin is for **role identity + future user-mgmt APIs**, not a substitute for admin pages.
 
 ## Verdict vs plain `role` column
 

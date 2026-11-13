@@ -36,7 +36,7 @@ Keep route modules thin; put the visible UI in `components/screen/`.
 Example (dashboard):
 
 ```
-client/pages/dashboard/index.tsx          → getData + <Dashboard email jobs />
+client/pages/dashboard/index.tsx          → getData + <Dashboard email posts />
 client/components/screen/dashboard/dashboard.tsx  → interactive UI
 ```
 
