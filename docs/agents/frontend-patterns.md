@@ -55,8 +55,8 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
 2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
-3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only. Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen.
-4. Auth gates: `ctx.reply.redirect(…)` then `return {}` (or `gateAdminPage` on `/admin/**`).
+3. Prefer **one** dynamic `import('@app/…')` of a page loader (gate + query + dto). Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen.
+4. Auth gates live in the loader (`gateAdminPage` / `reply.redirect`); `getData` stays a thin call.
 5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
 
 **Session / Admin (do not invent):**
@@ -65,8 +65,8 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 |------|-----|
 | Who is signed in? | `getSessionUser(req)` from `@app/controllers/auth` |
 | Is this User an Admin? | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'` |
-| Gate `/admin/**` | `gateAdminPage(req, reply)` |
-| Same JSON as `/api` | Call controller `*Dto` helpers in `getData` — do not hand-map fields |
+| Gate `/admin/**` | `app/controllers/admin/loaders.ts` (`loadAdmin*Page`) — pages import one loader |
+| Same JSON as `/api` | Loader calls controller `*Dto` helpers — do not hand-map fields in the page |
 
 ### Screens / live updates
 

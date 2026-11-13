@@ -8,13 +8,8 @@ import type { AdminUserDto } from '@/lib/api'
 type Data = { forbidden?: boolean; users?: AdminUserDto[] }
 
 export async function getData(ctx: { req: FastifyRequest; reply: FastifyReply }) {
-  const { gateAdminPage } = await import('@app/controllers/auth')
-  const { adminUserDto } = await import('@app/controllers/admin/dto')
-  const { listUsersForAdmin } = await import('@app/models/admin')
-  const gate = await gateAdminPage(ctx.req, ctx.reply)
-  if (!gate.ok) return gate.kind === 'forbidden' ? { forbidden: true } : {}
-  const users = await listUsersForAdmin()
-  return { users: users.map(adminUserDto) }
+  const { loadAdminUsersPage } = await import('@app/controllers/admin/loaders')
+  return loadAdminUsersPage(ctx.req, ctx.reply)
 }
 
 export function getMeta() {

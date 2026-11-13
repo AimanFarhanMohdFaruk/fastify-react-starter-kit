@@ -15,19 +15,8 @@ export async function getData(ctx: {
   req: FastifyRequest
   reply: FastifyReply
 }) {
-  const { gateAdminPage } = await import('@app/controllers/auth')
-  const { adminPostDetailDto } = await import('@app/controllers/admin/dto')
-  const { getPostForAdmin } = await import('@app/models/admin')
-  const gate = await gateAdminPage(ctx.req, ctx.reply)
-  if (!gate.ok) return gate.kind === 'forbidden' ? { forbidden: true } : {}
-
-  const id = (ctx.req.params as { id?: string }).id
-  if (!id) return { notFound: true }
-
-  const row = await getPostForAdmin(id)
-  if (!row) return { notFound: true }
-
-  return { post: adminPostDetailDto(row) }
+  const { loadAdminPostPage } = await import('@app/controllers/admin/loaders')
+  return loadAdminPostPage(ctx.req, ctx.reply)
 }
 
 export function getMeta() {

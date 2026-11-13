@@ -100,7 +100,7 @@ You write clean imports — `await import('@app/models/post')` — no `?server` 
 - Vite + tsconfig: `@app/*` → `app/*`
 - Vite + tsconfig: `@/*` → `client/*`
 
-**Convention:** only call `@app` from inside `getData` (dynamic import). Screens and page top-level must not import `@app`.
+**Convention:** only call `@app` from inside `getData` (dynamic import). Prefer one import of a page loader (`app/controllers/…/loaders`) over scattering gate/query/dto in the route module. Screens and page top-level must not import `@app`.
 
 ## Auth
 

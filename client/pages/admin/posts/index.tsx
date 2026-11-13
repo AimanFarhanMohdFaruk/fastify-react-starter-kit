@@ -11,14 +11,8 @@ export async function getData(ctx: {
   req: FastifyRequest
   reply: FastifyReply
 }) {
-  const { gateAdminPage } = await import('@app/controllers/auth')
-  const { adminPostListDto } = await import('@app/controllers/admin/dto')
-  const { listPostsForAdmin } = await import('@app/models/admin')
-  const gate = await gateAdminPage(ctx.req, ctx.reply)
-  if (!gate.ok) return gate.kind === 'forbidden' ? { forbidden: true } : {}
-
-  const rows = await listPostsForAdmin()
-  return { posts: rows.map(adminPostListDto) }
+  const { loadAdminPostsPage } = await import('@app/controllers/admin/loaders')
+  return loadAdminPostsPage(ctx.req, ctx.reply)
 }
 
 export function getMeta() {
