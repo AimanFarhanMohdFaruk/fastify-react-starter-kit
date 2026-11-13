@@ -1,12 +1,21 @@
 /**
  * HTTP shaping for jobs — not domain types.
  * Keep request/response mapping here; models stay pure.
+ * /api handlers and page getData both call jobDto — one JSON shape.
  */
 import { listDemoJobsForUser } from '../../models/demo-job'
 
 type JobRow = Awaited<ReturnType<typeof listDemoJobsForUser>>[number]
 
-export function jobDto(job: JobRow) {
+export type JobDto = {
+  id: string
+  payload: string
+  status: string
+  result: string | null
+  createdAt: string
+}
+
+export function jobDto(job: JobRow): JobDto {
   return {
     id: job.id,
     payload: job.payload,

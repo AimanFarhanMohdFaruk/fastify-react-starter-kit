@@ -1,21 +1,8 @@
-export type JobDto = {
-  id: string
-  payload: string
-  status: string
-  result: string | null
-  createdAt: string
-}
+/** HTTP shapes from controller DTOs (type-only — no client runtime @app). */
+import type { DocumentDto } from '@app/controllers/documents/dto'
+import type { JobDto } from '@app/controllers/jobs/dto'
 
-export type DocumentDto = {
-  id: string
-  filename: string
-  contentType: string
-  byteSize: number
-  status: string
-  extractedTextLength?: number | null
-  createdAt: string
-  updatedAt: string
-}
+export type { DocumentDto, JobDto }
 
 export async function fetchJobs(): Promise<JobDto[]> {
   const res = await fetch('/api/jobs', { credentials: 'include' })

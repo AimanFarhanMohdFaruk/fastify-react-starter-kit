@@ -37,12 +37,12 @@ cmd/worker    ──dequeue──►  app/jobs ──► models | services
 | Layer | Path | Owns |
 |-------|------|------|
 | **Models** | `app/models/` | Schema, invariants, queries, status transitions, Better Auth tables |
-| **Services** | `app/services/` | Cross-model or model + queue / external side effect |
-| **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` register + thin handlers/dto; auth gate → parse → one model/service → JSON |
-| **Jobs** | `app/jobs/` | Thin `boss.work` adapters → model/service |
+| **Services** | `app/services/` | Cross-model or model + queue / external side effect; upload-like policy + typed failures |
+| **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
+| **Jobs** | `app/jobs/` | Thin `boss.work` adapters → model/service (not the pg-boss client long-term) |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
 
-`app/db.ts` is the shared Drizzle + `postgres` client. `app/redis.ts` is the shared Redis client (`getRedis()`). `app/object-store.ts` is the S3-compatible store (RustFS locally). `app/mail.ts` is the email transport (`getMailer()`). Controllers do not open DB/Redis connections or talk to pg-boss / S3 / mail directly.
+Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, and the pg-boss client (target `app/queue.ts`; today still `app/jobs/queue.ts`). Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly.
 
 ## Page request path (HTML)
 
@@ -67,14 +67,18 @@ Mutations, polls, and Better Auth stay on Fastify:
 | Better Auth | `/api/auth/*` (handler in `app/controllers/auth`) |
 | App JSON | `/api/jobs` (list / enqueue), `/api/documents` (upload / list / get) |
 
-Typical controller: session gate → parse → one model or service → `reply.send`.
+Typical controller: `requireSession` on the route → parse → one model or service → `*Dto` → `reply.send`.
+
+Resource JSON for Job / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
+
+Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits, UI accept, and handler status mapping import from there.
 
 ## Jobs path
 
-1. Service (e.g. `enqueueDemoJob`) persists a row via the model, then `boss.send`.
-2. Worker process registers `boss.work` in `app/jobs/`.
+1. Service (e.g. `enqueueDemoJob`) persists a row via the model, then `boss.send` via the queue client.
+2. Worker process starts the queue client and registers `boss.work` in `app/jobs/` (thin adapter).
 3. Adapter calls model work (status transitions, long-running logic).
-4. UI that needs freshness polls `GET /api/…` after SSR seeded the list.
+4. UI that needs freshness polls `GET /api/…` after SSR seeded the list (same `*Dto` as the poll).
 
 ## Server-only boundary (`app/` ↔ client bundle)
 
@@ -96,7 +100,16 @@ You write clean imports — `await import('@app/models/demo-job')` — no `?serv
 
 ## Auth
 
-Better Auth lives in `app/models/auth` (schema + server instance). The web process mounts its handler under `/api/auth/*`. Pages use `getSessionUser` from `getData` for SSR gates; the browser uses the Better Auth client against the same routes.
+Better Auth lives in `app/models/auth` (schema + server instance). The web process mounts its handler under `/api/auth/*`.
+
+| Need | Use |
+|------|-----|
+| Session in `getData` | `getSessionUser(req)` |
+| Admin flag / authz | `isAdmin(user)` — never `role === 'admin'` |
+| Gate `/admin/**` | `gateAdminPage(req, reply)` |
+| Private `/api` | `requireSession` preHandler; `sessionUser(req)` in handlers |
+
+The browser uses the Better Auth client against the same `/api/auth/*` routes.
 
 ## What is intentionally not here
 

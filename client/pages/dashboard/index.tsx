@@ -9,6 +9,8 @@ type DashboardData = {
   isAdmin: boolean
   jobs: JobDto[]
   documents: DocumentDto[]
+  documentAccept: string
+  documentMaxBytes: number
 }
 
 export async function getData(ctx: {
@@ -19,6 +21,11 @@ export async function getData(ctx: {
   const { isAdmin } = await import('@app/models/admin')
   const { listDemoJobsForUser } = await import('@app/models/demo-job')
   const { listDocumentsForUser } = await import('@app/models/document')
+  const { jobDto } = await import('@app/controllers/jobs/dto')
+  const { documentDto } = await import('@app/controllers/documents/dto')
+  const { DOCUMENT_ACCEPT, DOCUMENT_MAX_BYTES } = await import(
+    '@app/services/upload-document'
+  )
   const user = await getSessionUser(ctx.req)
   if (!user) {
     ctx.reply.redirect('/login')
@@ -31,23 +38,10 @@ export async function getData(ctx: {
   return {
     email: user.email,
     isAdmin: isAdmin(user),
-    jobs: jobs.map((j) => ({
-      id: j.id,
-      payload: j.payload,
-      status: j.status,
-      result: j.result,
-      createdAt: j.createdAt.toISOString(),
-    })),
-    documents: docs.map((d) => ({
-      id: d.id,
-      filename: d.filename,
-      contentType: d.contentType,
-      byteSize: d.byteSize,
-      status: d.status,
-      extractedTextLength: d.extractedText?.length ?? null,
-      createdAt: d.createdAt.toISOString(),
-      updatedAt: d.updatedAt.toISOString(),
-    })),
+    documentAccept: DOCUMENT_ACCEPT,
+    documentMaxBytes: DOCUMENT_MAX_BYTES,
+    jobs: jobs.map(jobDto),
+    documents: docs.map(documentDto),
   }
 }
 
@@ -63,6 +57,8 @@ export default function DashboardPage() {
       isAdmin={data.isAdmin}
       jobs={data.jobs}
       documents={data.documents ?? []}
+      documentAccept={data.documentAccept}
+      documentMaxBytes={data.documentMaxBytes}
     />
   )
 }

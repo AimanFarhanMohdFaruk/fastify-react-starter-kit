@@ -9,6 +9,7 @@ import FastifyVite from '@fastify/vite'
 import { registerAuthRoutes } from '../../app/controllers/auth'
 import { registerDocumentRoutes } from '../../app/controllers/documents'
 import { registerJobRoutes } from '../../app/controllers/jobs'
+import { DOCUMENT_MAX_BYTES } from '../../app/services/upload-document'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '../..')
@@ -38,7 +39,7 @@ async function main() {
   await app.register(multipart, {
     limits: {
       files: 1,
-      fileSize: 5 * 1024 * 1024,
+      fileSize: DOCUMENT_MAX_BYTES,
     },
   })
   await app.register(import('@fastify/rate-limit'), {

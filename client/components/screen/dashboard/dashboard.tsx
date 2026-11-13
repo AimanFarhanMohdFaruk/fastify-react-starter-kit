@@ -20,6 +20,8 @@ export type DashboardProps = {
   isAdmin: boolean
   jobs: JobDto[]
   documents: DocumentDto[]
+  documentAccept: string
+  documentMaxBytes: number
 }
 
 export function Dashboard({
@@ -27,6 +29,8 @@ export function Dashboard({
   isAdmin,
   jobs: initialJobs,
   documents: initialDocuments,
+  documentAccept,
+  documentMaxBytes,
 }: DashboardProps) {
   const [jobs, setJobs] = useState<JobDto[]>(initialJobs)
   const [documents, setDocuments] = useState<DocumentDto[]>(initialDocuments)
@@ -151,7 +155,7 @@ export function Dashboard({
             <Input
               name="file"
               type="file"
-              accept=".md,.markdown,.txt,.pdf,text/plain,text/markdown,application/pdf"
+              accept={documentAccept}
               disabled={uploadBusy}
               nativeInput
               className="flex-1 cursor-pointer"
@@ -167,7 +171,8 @@ export function Dashboard({
           </form>
           {documents.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              None yet. Upload .md, .txt, or .pdf (max 5MB).
+              None yet. Upload .md, .txt, or .pdf (max{' '}
+              {Math.round(documentMaxBytes / (1024 * 1024))}MB).
             </p>
           ) : (
             <ul className="space-y-3">

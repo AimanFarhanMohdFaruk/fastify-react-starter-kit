@@ -56,8 +56,17 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
 2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
 3. May call session helpers / models via **dynamic** `import('@app/…')` inside `getData` only. Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen.
-4. Auth gates: `ctx.reply.redirect(…)` then `return {}`.
+4. Auth gates: `ctx.reply.redirect(…)` then `return {}` (or `gateAdminPage` on `/admin/**`).
 5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
+
+**Session / Admin (do not invent):**
+
+| Need | Use |
+|------|-----|
+| Who is signed in? | `getSessionUser(req)` from `@app/controllers/auth` |
+| Is this User an Admin? | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'` |
+| Gate `/admin/**` | `gateAdminPage(req, reply)` |
+| Same JSON as `/api` | Call controller `*Dto` helpers in `getData` — do not hand-map fields |
 
 ### Screens / live updates
 
@@ -68,8 +77,9 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 | Mutations / polls / refreshes | `fetch('/api/…')` — prefer helpers in `client/lib/api.ts` |
 | Auth UI (sign in/out, magic link) | Better Auth `authClient` → `/api/auth/*` |
 | Initial SSR props | From the page via props (from `getData`) — don’t re-fetch unless live |
+| DTO types | `import type { JobDto, … } from '@/lib/api'` (re-exported from controller dto) |
 
-Kit pattern for widgets (job list): **SSR seed from `getData` → props**, then `POST /api/…` + poll `GET /api/…` into screen state. Stop polling when no work is in flight.
+Kit pattern for widgets (job list): **SSR seed from `getData` → props** (via `*Dto`), then `POST /api/…` + poll `GET /api/…` into screen state. Stop polling when no work is in flight.
 
 ### Boundaries
 

@@ -3,7 +3,11 @@ import { Readable } from 'node:stream'
 import { beforeEach, describe, test } from 'node:test'
 import type { ObjectStore, PutObjectInput } from '../../app/object-store'
 import { listDocumentsForUser } from '../../app/models/document'
-import { sanitizeFilename, uploadDocument } from '../../app/services/upload-document'
+import {
+  sanitizeFilename,
+  uploadDocument,
+  UploadDocumentError,
+} from '../../app/services/upload-document'
 import { createSessionUser } from '../harness/auth'
 import { truncateAppTables } from '../harness/db'
 
@@ -115,7 +119,8 @@ describe('uploadDocument', () => {
           },
           { objectStore: store },
         ),
-      /Only text\/plain/,
+      (err: unknown) =>
+        err instanceof UploadDocumentError && err.kind === 'unsupported_type',
     )
   })
 })

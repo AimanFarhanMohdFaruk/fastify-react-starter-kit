@@ -8,7 +8,10 @@ import {
   getDocumentForUser,
   listDocumentsForUser,
 } from '../../models/document'
-import { uploadDocument } from '../../services/upload-document'
+import {
+  uploadDocument,
+  UploadDocumentError,
+} from '../../services/upload-document'
 import { documentDto } from './dto'
 
 export async function create(req: FastifyRequest, reply: FastifyReply) {
@@ -23,15 +26,12 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
     })
     return reply.code(201).send(documentDto(doc))
   } catch (err) {
+    if (err instanceof UploadDocumentError) {
+      return reply.code(400).send({ error: err.message, kind: err.kind })
+    }
     const message = err instanceof Error ? err.message : 'Upload failed'
-    const code =
-      message.includes('Only text/plain') ||
-      message.includes('Only text/plain, markdown') ||
-      message.includes('exceeds')
-        ? 400
-        : 500
     req.log.error({ err }, 'document upload failed')
-    return reply.code(code).send({ error: message })
+    return reply.code(500).send({ error: message })
   }
 }
 

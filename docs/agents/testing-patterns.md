@@ -80,6 +80,7 @@ describe('/api/…', () => {
 - Use `buildApiApp()` (controllers only — **no** Vite).
 - Always `t.after(() => app.close())`.
 - If a new controller is registered in `cmd/web`, register it in `test/harness/app.ts` too.
+- Multipart / upload limits in the harness must use the same service constants as `cmd/web` (e.g. `DOCUMENT_MAX_BYTES`).
 
 **Done when:** inject covers the auth gate and JSON contract; domain details already covered (or added) at the model seam.
 

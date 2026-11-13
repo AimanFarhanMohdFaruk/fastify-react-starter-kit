@@ -29,9 +29,11 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 **Rules of the road**
 
 - Models never import `controllers/`, `jobs/`, or `client/`.
-- Controllers stay thin; they do not talk to Drizzle or pg-boss directly.
-- `client/` is presentation — no domain rules, no client-side business filter/sort of collections.
+- Controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with `getData`.
+- Services own cross-model flows and upload-like policy (limits / typed errors); controllers stay thin — no Drizzle / pg-boss / S3 directly.
+- `client/` is presentation — no domain rules, no client-side business filter/sort; Admin via `isAdmin`, never `role === 'admin'`.
 - Schema change path: edit `app/models/schema.ts` → `npm run db:generate` → `npm run db:migrate`.
+- Full grow path: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md).
 
 Architecture (processes, seams, request paths): [docs/architecture.md](docs/architecture.md). Growing a feature: [docs/agents/grow-a-feature.md](docs/agents/grow-a-feature.md). Frontend patterns: [docs/agents/frontend-patterns.md](docs/agents/frontend-patterns.md). Testing: [docs/testing.md](docs/testing.md). Agent entrypoint: [AGENTS.md](./AGENTS.md).
 
@@ -42,9 +44,9 @@ cmd/web           # Fastify + /api + @fastify/vite
 cmd/worker        # pg-boss consumer
 app/models        # domain + Drizzle / Better Auth
 app/mail          # email transport + templates (Inbucket / Resend)
-app/services      # cross-model (e.g. enqueue)
-app/controllers   # /api — index.ts (scan) + handlers + dto; see jobs/
-app/jobs          # thin worker adapters
+app/services      # cross-model / enqueue / upload policy
+app/controllers   # /api — <resource>/{index,handlers,dto}; see jobs/
+app/jobs          # thin boss.work adapters (queue client → app/queue.ts)
 db/migrate        # Drizzle migrations (generate + migrate)
 docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
 client/pages      # route folders (…/index.tsx → URL; getData + UI)

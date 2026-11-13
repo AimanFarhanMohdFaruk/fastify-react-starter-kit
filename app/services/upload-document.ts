@@ -11,7 +11,24 @@ const ALLOWED_CONTENT_TYPES = new Set([
   'application/pdf',
 ])
 
-const MAX_BYTES = 5 * 1024 * 1024
+/** Single source for multipart limits (web + harness) and stream checks. */
+export const DOCUMENT_MAX_BYTES = 5 * 1024 * 1024
+
+/** `<input accept>` — keep in sync with ALLOWED_CONTENT_TYPES + extensions. */
+export const DOCUMENT_ACCEPT =
+  '.md,.markdown,.txt,.pdf,text/plain,text/markdown,text/x-markdown,application/pdf'
+
+export type UploadDocumentErrorKind = 'unsupported_type' | 'too_large'
+
+export class UploadDocumentError extends Error {
+  readonly kind: UploadDocumentErrorKind
+
+  constructor(kind: UploadDocumentErrorKind, message: string) {
+    super(message)
+    this.name = 'UploadDocumentError'
+    this.kind = kind
+  }
+}
 
 export type UploadFileInput = {
   filename: string
@@ -43,7 +60,10 @@ export function resolveContentType(filename: string, contentType: string): strin
 
 function assertAllowed(contentType: string) {
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
-    throw new Error('Only text/plain, markdown, and PDF uploads are supported')
+    throw new UploadDocumentError(
+      'unsupported_type',
+      'Only text/plain, markdown, and PDF uploads are supported',
+    )
   }
 }
 
@@ -54,8 +74,13 @@ function countingTransform(): { stream: Transform; getByteSize: () => number } {
     transform(chunk, _enc, cb) {
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
       byteSize += buf.length
-      if (byteSize > MAX_BYTES) {
-        cb(new Error(`File exceeds ${MAX_BYTES} byte limit`))
+      if (byteSize > DOCUMENT_MAX_BYTES) {
+        cb(
+          new UploadDocumentError(
+            'too_large',
+            `File exceeds ${DOCUMENT_MAX_BYTES} byte limit`,
+          ),
+        )
         return
       }
       cb(null, buf)

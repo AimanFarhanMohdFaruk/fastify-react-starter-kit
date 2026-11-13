@@ -4,8 +4,13 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 
 ## Always
 
-- **Fat models**, thin controllers/jobs; **services** only for cross-model workflows.
+- **Fat models**, thin controllers/jobs; **services** only for cross-model / model+queue / policy-heavy intake.
 - Models never import `controllers/`, `jobs/`, or `client/`.
+- **Controllers** are always `app/controllers/<resource>/{index,handlers,dto}.ts` (even one route). Scan `index.ts` (`app.get/post` + `requireSession` when private). Exception: `auth.ts`.
+- **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers and page `getData` both call `*Dto`. Client types via `import type` through `@/lib/api`.
+- **Auth** — `requireSession` / `sessionUser` for private `/api`; `getSessionUser` / `gateAdminPage` / `isAdmin` for pages — never `role === 'admin'`.
+- **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
+- **Queue** — boss client is infra (target `app/queue.ts`); `app/jobs/` = thin `boss.work` adapters only.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.
 - Tests: **`node:test` + `node:assert`**, Testcontainers DB (never app `.env` `DATABASE_URL`), real Better Auth `testUtils` sessions — see testing patterns.
 

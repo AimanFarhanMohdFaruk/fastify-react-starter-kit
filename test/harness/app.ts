@@ -5,6 +5,7 @@ import multipart from '@fastify/multipart'
 import { registerAuthRoutes } from '../../app/controllers/auth'
 import { registerDocumentRoutes } from '../../app/controllers/documents'
 import { registerJobRoutes } from '../../app/controllers/jobs'
+import { DOCUMENT_MAX_BYTES } from '../../app/services/upload-document'
 
 export async function buildApiApp() {
   const app = Fastify({ logger: false })
@@ -13,7 +14,7 @@ export async function buildApiApp() {
   await app.register(multipart, {
     limits: {
       files: 1,
-      fileSize: 5 * 1024 * 1024,
+      fileSize: DOCUMENT_MAX_BYTES,
     },
   })
   await registerAuthRoutes(app)

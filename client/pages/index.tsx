@@ -10,10 +10,11 @@ type HomeData = {
 
 export async function getData(ctx: { req: FastifyRequest }) {
   const { getSessionUser } = await import('@app/controllers/auth')
+  const { isAdmin } = await import('@app/models/admin')
   const user = await getSessionUser(ctx.req)
   return {
     email: user?.email ?? null,
-    isAdmin: user?.role === 'admin',
+    isAdmin: user ? isAdmin(user) : false,
   }
 }
 
