@@ -82,12 +82,14 @@ Controller must not:
 
 Stupid bus — **no domain row required** to enqueue.
 
-- **Infra:** `app/queue.ts` — `getBoss` + `enqueue(name, args)` (peer of `db` / `mail`).
-- **Handlers:** register in `app/workers/handlers.ts` — `name → service`.
+- **Infra:** `app/queue.ts` — `getBoss` + typed `enqueue(name, args)` (peer of `db` / `mail`).
+- **Handlers:** register in `app/workers/handlers.ts` — **source of truth** for job names + arg types. `enqueue` is generic over this map.
 - **Delivery:** `app/workers/dispatch.ts` — one `boss.work` → look up handler.
 - Register from `cmd/worker/main.ts` only — never run the consumer inside `cmd/web`.
 
 ```ts
+// 1) add to handlers.ts:  parse_document: parseDocument,
+// 2) call site is typed:
 await enqueue('shout', { message: 'hi', userId })
 // worker → handlers.shout → services/shout
 ```

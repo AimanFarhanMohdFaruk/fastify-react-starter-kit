@@ -1,13 +1,17 @@
-import { shout, type ShoutArgs } from '../services/shout'
+import { shout } from '../services/shout'
 
-/** name → service. Queue stays stupid; add entries here when growing work. */
-
+/**
+ * Job registry — source of truth for names + args.
+ * Add a job = add one entry here; enqueue() and the worker both key off this map.
+ */
 export const handlers = {
-  shout: (args: unknown) => shout(args as ShoutArgs),
+  shout,
 } as const
 
-export type JobName = keyof typeof handlers
+export type Jobs = typeof handlers
+export type JobName = keyof Jobs
+export type JobArgs<N extends JobName> = Parameters<Jobs[N]>[0]
 
 export function isJobName(name: string): name is JobName {
-  return name in handlers
+  return Object.hasOwn(handlers, name)
 }

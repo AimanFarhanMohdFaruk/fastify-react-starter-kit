@@ -10,7 +10,7 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 - **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers and page `getData` both call `*Dto`. Client types via `import type` through `@/lib/api`.
 - **Auth** — `requireSession` / `sessionUser` for private `/api`; `getSessionUser` / `gateAdminPage` / `isAdmin` for pages — never `role === 'admin'`.
 - **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
-- **Queue** — stupid bus: `enqueue(name, args)` in `app/queue.ts` (infra). `app/workers/` = dispatch + `handlers[name]` → services. Do **not** require a domain row to enqueue.
+- **Queue** — stupid bus: typed `enqueue(name, args)` in `app/queue.ts` (infra); names/args from `app/workers/handlers.ts`. Dispatch → `handlers[name]` → services. Do **not** require a domain row to enqueue.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.
 - Tests: **`node:test` + `node:assert`**, Testcontainers DB (never app `.env` `DATABASE_URL`), real Better Auth `testUtils` sessions — see testing patterns.
 
