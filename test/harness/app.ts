@@ -4,7 +4,7 @@ import formbody from '@fastify/formbody'
 import multipart from '@fastify/multipart'
 import { registerAuthRoutes } from '../../app/controllers/auth'
 import { registerDocumentRoutes } from '../../app/controllers/documents'
-import { registerJobRoutes } from '../../app/controllers/jobs'
+import { registerReportRoutes } from '../../app/controllers/reports'
 import { DOCUMENT_MAX_BYTES } from '../../app/services/upload-document'
 
 export async function buildApiApp() {
@@ -18,7 +18,7 @@ export async function buildApiApp() {
     },
   })
   await registerAuthRoutes(app)
-  await registerJobRoutes(app)
+  await registerReportRoutes(app)
   await registerDocumentRoutes(app)
   return app
 }

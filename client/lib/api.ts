@@ -1,23 +1,23 @@
 /** HTTP shapes from controller DTOs (type-only — no client runtime @app). */
 import type { DocumentDto } from '@app/controllers/documents/dto'
-import type { JobDto } from '@app/controllers/jobs/dto'
+import type { ReportDto } from '@app/controllers/reports/dto'
 
-export type { DocumentDto, JobDto }
+export type { DocumentDto, ReportDto }
 
-export async function fetchJobs(): Promise<JobDto[]> {
-  const res = await fetch('/api/jobs', { credentials: 'include' })
+export async function fetchReports(): Promise<ReportDto[]> {
+  const res = await fetch('/api/reports', { credentials: 'include' })
   if (res.status === 401) {
     window.location.href = '/login'
     return []
   }
   if (!res.ok) {
-    throw new Error(`Failed to load jobs (${res.status})`)
+    throw new Error(`Failed to load reports (${res.status})`)
   }
   return res.json()
 }
 
-export async function enqueueJob(payload: string): Promise<JobDto> {
-  const res = await fetch('/api/jobs', {
+export async function enqueueReport(payload: string): Promise<ReportDto> {
+  const res = await fetch('/api/reports', {
     method: 'POST',
     credentials: 'include',
     headers: { 'content-type': 'application/json' },

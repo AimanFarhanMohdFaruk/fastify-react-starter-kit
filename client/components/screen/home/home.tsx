@@ -47,7 +47,7 @@ function ProductPreview({ className }: { className?: string }) {
             <span className="text-sm tracking-tight">starter</span>
           </div>
           <div className="space-y-2">
-            {['Overview', 'Jobs', 'Auth', 'Models'].map((item, i) => (
+            {['Overview', 'Reports', 'Auth', 'Models'].map((item, i) => (
               <div
                 key={item}
                 className={cn(
@@ -63,9 +63,9 @@ function ProductPreview({ className }: { className?: string }) {
         <div className="min-w-0 flex-1 p-4 sm:p-6">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <p className="text-muted-foreground text-xs">Background jobs</p>
+              <p className="text-muted-foreground text-xs">Background reports</p>
               <p className="mt-1 font-heading text-2xl tracking-tight">
-                demo-job
+                report
               </p>
             </div>
             <div className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground text-xs">
@@ -74,14 +74,14 @@ function ProductPreview({ className }: { className?: string }) {
           </div>
           <div className="space-y-2">
             {[
-              { id: 'job_8f2a', status: 'completed', tone: 'text-foreground' },
+              { id: 'rpt_8f2a', status: 'completed', tone: 'text-foreground' },
               {
-                id: 'job_3c91',
+                id: 'rpt_3c91',
                 status: 'running',
                 tone: 'text-muted-foreground',
               },
               {
-                id: 'job_a01e',
+                id: 'rpt_a01e',
                 status: 'queued',
                 tone: 'text-muted-foreground',
               },

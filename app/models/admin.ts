@@ -1,6 +1,6 @@
 import { asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '../db'
-import { demoJobs, user } from './schema'
+import { reports, user } from './schema'
 
 /** Admin authz + directory queries — fat model */
 
@@ -72,36 +72,36 @@ export async function getUserForAdmin(id: string) {
   return row ?? null
 }
 
-export async function listDemoJobsForAdmin() {
+export async function listReportsForAdmin() {
   return db
     .select({
-      id: demoJobs.id,
-      status: demoJobs.status,
-      createdAt: demoJobs.createdAt,
-      userId: demoJobs.userId,
+      id: reports.id,
+      status: reports.status,
+      createdAt: reports.createdAt,
+      userId: reports.userId,
       userEmail: user.email,
     })
-    .from(demoJobs)
-    .innerJoin(user, eq(demoJobs.userId, user.id))
-    .orderBy(desc(demoJobs.createdAt))
+    .from(reports)
+    .innerJoin(user, eq(reports.userId, user.id))
+    .orderBy(desc(reports.createdAt))
     .limit(100)
 }
 
-export async function getDemoJobForAdmin(id: string) {
+export async function getReportForAdmin(id: string) {
   const [row] = await db
     .select({
-      id: demoJobs.id,
-      status: demoJobs.status,
-      payload: demoJobs.payload,
-      result: demoJobs.result,
-      createdAt: demoJobs.createdAt,
-      finishedAt: demoJobs.finishedAt,
-      userId: demoJobs.userId,
+      id: reports.id,
+      status: reports.status,
+      payload: reports.payload,
+      result: reports.result,
+      createdAt: reports.createdAt,
+      finishedAt: reports.finishedAt,
+      userId: reports.userId,
       userEmail: user.email,
     })
-    .from(demoJobs)
-    .innerJoin(user, eq(demoJobs.userId, user.id))
-    .where(eq(demoJobs.id, id))
+    .from(reports)
+    .innerJoin(user, eq(reports.userId, user.id))
+    .where(eq(reports.id, id))
     .limit(1)
   return row ?? null
 }

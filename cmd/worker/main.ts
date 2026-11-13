@@ -1,8 +1,8 @@
 import 'dotenv/config'
-import { registerDemoJobWorker } from '../../app/jobs/demo-job'
+import { registerReportWorker } from '../../app/jobs/report'
 import { getBoss } from '../../app/jobs/queue'
 
 console.log('[worker] starting…')
 await getBoss()
-await registerDemoJobWorker()
-console.log('[worker] listening on queue demo-job')
+await registerReportWorker()
+console.log('[worker] listening on queue report')

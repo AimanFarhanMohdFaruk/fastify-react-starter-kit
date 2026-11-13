@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  enqueueJob,
-  fetchJobs,
+  enqueueReport,
+  fetchReports,
   uploadDocument,
   type DocumentDto,
-  type JobDto,
+  type ReportDto,
 } from '@/lib/api'
 
 const ACTIVE = new Set(['queued', 'running'])
@@ -18,7 +18,7 @@ const ACTIVE = new Set(['queued', 'running'])
 export type DashboardProps = {
   email: string
   isAdmin: boolean
-  jobs: JobDto[]
+  reports: ReportDto[]
   documents: DocumentDto[]
   documentAccept: string
   documentMaxBytes: number
@@ -27,27 +27,27 @@ export type DashboardProps = {
 export function Dashboard({
   email,
   isAdmin,
-  jobs: initialJobs,
+  reports: initialReports,
   documents: initialDocuments,
   documentAccept,
   documentMaxBytes,
 }: DashboardProps) {
-  const [jobs, setJobs] = useState<JobDto[]>(initialJobs)
+  const [reports, setReports] = useState<ReportDto[]>(initialReports)
   const [documents, setDocuments] = useState<DocumentDto[]>(initialDocuments)
   const [payload, setPayload] = useState('')
   const [flash, setFlash] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploadBusy, setUploadBusy] = useState(false)
 
-  const hasActiveJobs = jobs.some((j) => ACTIVE.has(j.status))
+  const hasActiveReports = reports.some((r) => ACTIVE.has(r.status))
 
   useEffect(() => {
-    if (!hasActiveJobs) return
+    if (!hasActiveReports) return
     let cancelled = false
     const tick = async () => {
       try {
-        const next = await fetchJobs()
-        if (!cancelled) setJobs(next)
+        const next = await fetchReports()
+        if (!cancelled) setReports(next)
       } catch {
         // keep last good list
       }
@@ -58,7 +58,7 @@ export function Dashboard({
       cancelled = true
       window.clearInterval(id)
     }
-  }, [hasActiveJobs])
+  }, [hasActiveReports])
 
   return (
     <AppShell email={email} isAdmin={isAdmin}>
@@ -66,7 +66,7 @@ export function Dashboard({
         <div>
           <h1 className="font-heading font-bold text-3xl tracking-tight">Dashboard</h1>
           <p className="mt-1 text-muted-foreground text-sm">
-            Enqueue demo jobs and upload documents.
+            Enqueue reports and upload documents.
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export function Dashboard({
         ) : null}
 
         <section className="space-y-3">
-          <h2 className="font-semibold text-lg">Jobs</h2>
+          <h2 className="font-semibold text-lg">Reports</h2>
           <form
             className="flex flex-col gap-3 sm:flex-row"
             onSubmit={async (e) => {
@@ -85,10 +85,10 @@ export function Dashboard({
               setBusy(true)
               setFlash(null)
               try {
-                const job = await enqueueJob(payload)
-                setJobs((prev) => [job, ...prev])
+                const report = await enqueueReport(payload)
+                setReports((prev) => [report, ...prev])
                 setPayload('')
-                setFlash('Job queued — run npm run worker or npm run dev:all')
+                setFlash('Report queued — run npm run worker or npm run dev:all')
               } catch (err) {
                 setFlash(err instanceof Error ? err.message : 'Enqueue failed')
               } finally {
@@ -100,28 +100,28 @@ export function Dashboard({
               className="flex-1"
               value={payload}
               onChange={(e) => setPayload(e.target.value)}
-              placeholder="job payload"
+              placeholder="report payload"
               required
             />
             <Button type="submit" disabled={busy} loading={busy}>
               Enqueue
             </Button>
           </form>
-          {jobs.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No jobs yet.</p>
+          {reports.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No reports yet.</p>
           ) : (
             <ul className="space-y-3">
-              {jobs.map((j) => (
+              {reports.map((r) => (
                 <li
-                  key={j.id}
+                  key={r.id}
                   className="rounded-lg border border-border bg-card px-4 py-3 text-card-foreground"
                 >
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{j.status}</Badge>
-                    <span className="text-sm">{j.payload}</span>
+                    <Badge variant="outline">{r.status}</Badge>
+                    <span className="text-sm">{r.payload}</span>
                   </div>
-                  {j.result ? (
-                    <p className="mt-2 text-muted-foreground text-xs">{j.result}</p>
+                  {r.result ? (
+                    <p className="mt-2 text-muted-foreground text-xs">{r.result}</p>
                   ) : null}
                 </li>
               ))}

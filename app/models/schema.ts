@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core'
 
-/** Better Auth core tables + kit demo_jobs. Fat models import from here. */
+/** Better Auth core tables + kit domain tables. Fat models import from here. */
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -58,7 +58,7 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at').defaultNow(),
 })
 
-export const demoJobs = pgTable('demo_jobs', {
+export const reports = pgTable('reports', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
@@ -86,5 +86,5 @@ export const documents = pgTable('documents', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
-export type DemoJob = typeof demoJobs.$inferSelect
+export type Report = typeof reports.$inferSelect
 export type Document = typeof documents.$inferSelect

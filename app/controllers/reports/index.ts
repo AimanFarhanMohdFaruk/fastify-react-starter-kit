@@ -6,7 +6,7 @@ import type { FastifyInstance } from 'fastify'
 import { requireSession } from '../auth'
 import { create, list } from './handlers'
 
-export async function registerJobRoutes(app: FastifyInstance) {
-  app.get('/api/jobs', { preHandler: requireSession }, list)
-  app.post('/api/jobs', { preHandler: requireSession }, create)
+export async function registerReportRoutes(app: FastifyInstance) {
+  app.get('/api/reports', { preHandler: requireSession }, list)
+  app.post('/api/reports', { preHandler: requireSession }, create)
 }

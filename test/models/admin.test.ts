@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import { beforeEach, describe, test } from 'node:test'
 import {
-  getDemoJobForAdmin,
+  getReportForAdmin,
   getUserForAdmin,
   isAdmin,
-  listDemoJobsForAdmin,
+  listReportsForAdmin,
   listUsersForAdmin,
   promoteUserToAdmin,
   requireAdmin,
 } from '../../app/models/admin'
-import { createDemoJob } from '../../app/models/demo-job'
+import { createReport } from '../../app/models/report'
 import { createSessionUser } from '../harness/auth'
 import { truncateAppTables } from '../harness/db'
 
@@ -91,28 +91,28 @@ describe('admin directory queries', () => {
     assert.equal(row.id, user.id)
   })
 
-  test('listDemoJobsForAdmin includes jobs from all users', async () => {
+  test('listReportsForAdmin includes reports from all users', async () => {
     const a = await createSessionUser({ email: 'owner-a@example.com' })
     const b = await createSessionUser({ email: 'owner-b@example.com' })
-    const jobA = await createDemoJob(a.user.id, 'from-a')
-    const jobB = await createDemoJob(b.user.id, 'from-b')
+    const reportA = await createReport(a.user.id, 'from-a')
+    const reportB = await createReport(b.user.id, 'from-b')
 
-    const jobs = await listDemoJobsForAdmin()
-    assert.equal(jobs.length, 2)
-    const emails = new Set(jobs.map((j) => j.userEmail))
+    const rows = await listReportsForAdmin()
+    assert.equal(rows.length, 2)
+    const emails = new Set(rows.map((r) => r.userEmail))
     assert.ok(emails.has('owner-a@example.com'))
     assert.ok(emails.has('owner-b@example.com'))
-    assert.ok(jobs.some((j) => j.id === jobA.id))
-    assert.ok(jobs.some((j) => j.id === jobB.id))
+    assert.ok(rows.some((r) => r.id === reportA.id))
+    assert.ok(rows.some((r) => r.id === reportB.id))
   })
 
-  test('getDemoJobForAdmin returns payload and user email', async () => {
-    const { user } = await createSessionUser({ email: 'job-owner@example.com' })
-    const job = await createDemoJob(user.id, 'secret-payload')
-    const row = await getDemoJobForAdmin(job.id)
+  test('getReportForAdmin returns payload and user email', async () => {
+    const { user } = await createSessionUser({ email: 'report-owner@example.com' })
+    const report = await createReport(user.id, 'secret-payload')
+    const row = await getReportForAdmin(report.id)
     assert.ok(row)
     assert.equal(row.payload, 'secret-payload')
-    assert.equal(row.userEmail, 'job-owner@example.com')
+    assert.equal(row.userEmail, 'report-owner@example.com')
     assert.equal(row.userId, user.id)
   })
 })

@@ -65,17 +65,17 @@ Mutations, polls, and Better Auth stay on Fastify:
 | Surface | Example |
 |---------|---------|
 | Better Auth | `/api/auth/*` (handler in `app/controllers/auth`) |
-| App JSON | `/api/jobs` (list / enqueue), `/api/documents` (upload / list / get) |
+| App JSON | `/api/reports` (list / enqueue), `/api/documents` (upload / list / get) |
 
 Typical controller: `requireSession` on the route → parse → one model or service → `*Dto` → `reply.send`.
 
-Resource JSON for Job / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
+Resource JSON for Report / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
 
 Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits, UI accept, and handler status mapping import from there.
 
 ## Jobs path
 
-1. Service (e.g. `enqueueDemoJob`) persists a row via the model, then `boss.send` via the queue client.
+1. Service (e.g. `enqueueReport`) persists a row via the model, then `boss.send` via the queue client.
 2. Worker process starts the queue client and registers `boss.work` in `app/jobs/` (thin adapter).
 3. Adapter calls model work (status transitions, long-running logic).
 4. UI that needs freshness polls `GET /api/…` after SSR seeded the list (same `*Dto` as the poll).
@@ -91,7 +91,7 @@ This kit’s answer is `vite.app-server-only.ts`, registered in `vite.config.ts`
 | **ssr** | Real modules (DB, auth, domain) |
 | **client** | Synthetic stubs with the same export names |
 
-You write clean imports — `await import('@app/models/demo-job')` — no `?server` query, no `server-imports.d.ts`. Aliases:
+You write clean imports — `await import('@app/models/report')` — no `?server` query, no `server-imports.d.ts`. Aliases:
 
 - Vite + tsconfig: `@app/*` → `app/*`
 - Vite + tsconfig: `@/*` → `client/*`

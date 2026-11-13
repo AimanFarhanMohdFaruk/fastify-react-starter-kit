@@ -24,7 +24,7 @@ Add `app/services/` when the use-case spans **more than one model** or model + q
 | Persist then return row | Persist row **and** enqueue pg-boss / call another system |
 | Pure domain helpers | Multi-step workflows that would otherwise fatten a controller |
 
-Example in this kit: `enqueueDemoJob` creates the row (model) then `boss.send` (queue) — that’s a service.
+Example in this kit: `enqueueReport` creates the row (model) then `boss.send` (queue) — that’s a service.
 
 **Upload / policy-heavy intake:** own limits, accept strings, and typed failures in the service (see `upload-document.ts`: `DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, `UploadDocumentError`). Multipart boot, harness, UI, and handlers **import** those — do not scatter magic numbers or scrape `Error.message` for HTTP status.
 
@@ -32,7 +32,7 @@ Example in this kit: `enqueueDemoJob` creates the row (model) then `boss.send` (
 
 ## 3. Thin controller (`/api`)
 
-Add `app/controllers/<resource>/` and register it from `cmd/web/main.ts` **and** `test/harness/app.ts` **before** `FastifyVite`. Reference: `app/controllers/jobs/`.
+Add `app/controllers/<resource>/` and register it from `cmd/web/main.ts` **and** `test/harness/app.ts` **before** `FastifyVite`. Reference: `app/controllers/reports/`.
 
 ```
 app/controllers/<resource>/
@@ -46,9 +46,9 @@ app/controllers/<resource>/
 `index.ts` example:
 
 ```ts
-export async function registerJobRoutes(app: FastifyInstance) {
-  app.get('/api/jobs', { preHandler: requireSession }, list)
-  app.post('/api/jobs', { preHandler: requireSession }, create)
+export async function registerReportRoutes(app: FastifyInstance) {
+  app.get('/api/reports', { preHandler: requireSession }, list)
+  app.post('/api/reports', { preHandler: requireSession }, create)
 }
 ```
 
@@ -79,7 +79,7 @@ Controller must not:
 
 - **Infra:** pg-boss client belongs with other process singletons (`app/db`, `app/mail`, …) — intended module `app/queue.ts` (`getBoss`). Do not treat the client as “part of a job adapter.” (Today the client still lives at `app/jobs/queue.ts`; move toward `app/queue.ts` when touching queue code.)
 - **Adapters:** `app/jobs/<name>.ts` — thin `boss.work` → model/service only. Share queue **name + payload type** with the enqueue service.
-- Long work / status updates → `app/models/` (e.g. `runDemoJobWork`).
+- Long work / status updates → `app/models/` (e.g. `runReportWork`).
 - Register workers from `cmd/worker/main.ts` only — never run the consumer inside `cmd/web`.
 
 **Done when:** `npm run worker` processes a message and the model row reflects success/failure.

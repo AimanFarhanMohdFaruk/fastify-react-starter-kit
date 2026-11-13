@@ -173,4 +173,4 @@ NODE_ENV=production npm run start:worker
 ## Notes
 
 - Local magic links land in **Inbucket** (`http://localhost:8025`) when `MAIL_TRANSPORT=smtp`. Use `MAIL_TRANSPORT=log` to print to the web console instead.
-- Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*` and `/api/jobs`. Job list live-updates by polling `GET /api/jobs`.
+- Pages via `@fastify/vite` + `@fastify/react` (`client/pages`); JSON under `/api/auth/*` and `/api/reports`. Report list live-updates by polling `GET /api/reports`.
