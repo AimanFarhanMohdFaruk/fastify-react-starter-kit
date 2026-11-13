@@ -29,11 +29,29 @@ Example in this kit: `enqueueDemoJob` creates the row (model) then `boss.send` (
 
 ## 3. Thin controller (`/api`)
 
-Add or extend `app/controllers/<resource>.ts` and register it from `cmd/web/main.ts` **before** `FastifyVite`.
+Add `app/controllers/<resource>/` (fluent register) and wire it from `cmd/web/main.ts` **before** `FastifyVite`. Reference: `app/controllers/jobs/`.
+
+```
+app/controllers/<resource>/
+  index.ts       # API index — app.get/post(path, handlerRef); scan here
+  handlers.ts    # thin: parse → one model/service → JSON
+  dto.ts         # optional — HTTP input/response shaping (not domain)
+```
+
+Always use the folder layout — even for a single route. Do not add flat `app/controllers/<resource>.ts` route files. Exception: `app/controllers/auth.ts` (Better Auth catch-all, session helpers, `requireSession`).
+
+`index.ts` example:
+
+```ts
+export async function registerJobRoutes(app: FastifyInstance) {
+  app.get('/api/jobs', { preHandler: requireSession }, list)
+  app.post('/api/jobs', { preHandler: requireSession }, create)
+}
+```
 
 Controller may:
 
-1. Auth / session gate  
+1. Auth / session gate via `requireSession` on the route (sets `req.user`); handlers use `sessionUser(req)` — leave public routes without the preHandler  
 2. Parse body/query/params  
 3. Call **one** model or service  
 4. Map result → **JSON** (`reply.send` / status codes)
@@ -84,5 +102,5 @@ models/       → domain + DB; never import adapters above
 
 ## Naming
 
-- Controllers named by resource (`jobs`, `auth`) — not `index` grab-bags.
-- One `register*Routes(app)` export per controller file; `cmd/web` boots API then Vite.
+- Controllers named by resource folder (`jobs/`, `documents/`) — not grab-bags; not flat `*.ts` route modules.
+- One `register*Routes(app)` export from the controller package (`index.ts`); `cmd/web` boots API then Vite.

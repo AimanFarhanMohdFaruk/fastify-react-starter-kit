@@ -38,7 +38,7 @@ cmd/worker    ──dequeue──►  app/jobs ──► models | services
 |-------|------|------|
 | **Models** | `app/models/` | Schema, invariants, queries, status transitions, Better Auth tables |
 | **Services** | `app/services/` | Cross-model or model + queue / external side effect |
-| **Controllers** | `app/controllers/` | Auth gate, parse, call one model/service, JSON |
+| **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` register + thin handlers/dto; auth gate → parse → one model/service → JSON |
 | **Jobs** | `app/jobs/` | Thin `boss.work` adapters → model/service |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
 

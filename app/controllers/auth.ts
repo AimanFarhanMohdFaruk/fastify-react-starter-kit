@@ -2,6 +2,13 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { auth, type SessionUser } from '../models/auth'
 import { isAdmin } from '../models/admin'
 
+declare module 'fastify' {
+  interface FastifyRequest {
+    /** Set by `requireSession` preHandler. */
+    user?: SessionUser
+  }
+}
+
 /** Convert Fastify request to Fetch API Request for Better Auth. */
 export async function toAuthRequest(req: FastifyRequest) {
   const host = req.headers.host ?? 'localhost:3000'
@@ -24,6 +31,21 @@ export async function toAuthRequest(req: FastifyRequest) {
 export async function getSessionUser(req: FastifyRequest) {
   const session = await auth.api.getSession({ headers: fromFastifyHeaders(req) })
   return session?.user ?? null
+}
+
+/** Route preHandler — 401 if no session; sets `req.user`. */
+export async function requireSession(req: FastifyRequest, reply: FastifyReply) {
+  const user = await getSessionUser(req)
+  if (!user) return reply.code(401).send({ error: 'Unauthorized' })
+  req.user = user
+}
+
+/** Read `req.user` after `requireSession` — throws if the preHandler was omitted. */
+export function sessionUser(req: FastifyRequest): SessionUser {
+  if (!req.user) {
+    throw new Error('sessionUser: requireSession preHandler missing')
+  }
+  return req.user
 }
 
 export type AdminGate =

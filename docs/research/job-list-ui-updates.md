@@ -4,7 +4,7 @@ Research note for the personal starter-kit dashboard enqueue + status refresh.
 
 ## Current behavior
 
-1. `POST /jobs` enqueues, then **redirects** to `GET /dashboard?flash=…` ([`app/controllers/jobs.ts`](../../app/controllers/jobs.ts)).
+1. `POST /jobs` enqueues, then **redirects** to `GET /dashboard?flash=…` ([`app/controllers/jobs/`](../../app/controllers/jobs/)).
 2. Dashboard polls with `router.get('/dashboard', …, { only: ['jobs'], preserveState: true, preserveScroll: true })` ([`web/pages/Dashboard.tsx`](../../web/pages/Dashboard.tsx)).
 
 The **scroll-to-top** feeling comes mainly from the **enqueue visit**, not the poll:
@@ -83,4 +83,4 @@ Polling every 1.5s with `preserveScroll: true` is already the right Inertia-shap
 
 ## Adopted (kit migration)
 
-The kit left Inertia for **`@fastify/react`** and adopted **option E**: `POST /api/jobs` + poll `GET /api/jobs` into React state on the dashboard page. No PRG, no scroll jump from page visits. See `client/pages/dashboard/index.tsx` and `app/controllers/jobs.ts`.
+The kit left Inertia for **`@fastify/react`** and adopted **option E**: `POST /api/jobs` + poll `GET /api/jobs` into React state on the dashboard page. No PRG, no scroll jump from page visits. See `client/pages/dashboard/index.tsx` and `app/controllers/jobs/`.

@@ -21,7 +21,7 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 | Idea             | What it controls                                                             |
 | ---------------- | ---------------------------------------------------------------------------- |
 | Fat models       | `app/models/` — schema, invariants, queries, status transitions              |
-| Thin controllers | `app/controllers/` — auth gate, parse, call one model/service, JSON          |
+| Thin controllers | `app/controllers/<resource>/` — fluent `index.ts` + handlers/dto; JSON       |
 | Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)            |
 | Jobs             | `app/jobs/` + `cmd/worker` — pg-boss adapters; work stays in models/services |
 | Services         | `app/services/` — **only** when a use-case spans models or model + queue     |
@@ -43,7 +43,7 @@ cmd/worker        # pg-boss consumer
 app/models        # domain + Drizzle / Better Auth
 app/mail          # email transport + templates (Inbucket / Resend)
 app/services      # cross-model (e.g. enqueue)
-app/controllers   # thin /api HTTP
+app/controllers   # /api — index.ts (scan) + handlers + dto; see jobs/
 app/jobs          # thin worker adapters
 db/migrate        # Drizzle migrations (generate + migrate)
 docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
