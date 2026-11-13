@@ -59,21 +59,21 @@ export async function registerPostRoutes(app: FastifyInstance) {
 |------|-----|
 | Private `/api` | `{ preHandler: requireSession }` on the route; handlers use `sessionUser(req)` |
 | Public `/api` | Omit `requireSession` |
-| Response JSON | `*Dto` helpers in `dto.ts` — same helpers `getData` must call |
+| Response JSON | `*Dto` helpers in `dto.ts` — same helpers page **loaders** call |
 | Typed service failures | `instanceof UploadDocumentError` (or similar) → status; no substring matching |
 
 Controller may:
 
-1. Auth / session gate (prefer route `preHandler`)  
-2. Parse body/query/params (or dto parsers)  
-3. Call **one** model or service (or `enqueue`)  
+1. Auth / session gate (prefer route `preHandler`)
+2. Parse body/query/params (or dto parsers)
+3. Call **one** model or service (or `enqueue`)
 4. Map result → **JSON** via dto (`reply.send` / status codes)
 
 Controller must not:
 
 - Encode business rules (validation beyond “required field present” belongs in the model)
 - Talk to Drizzle or S3 / mail / Redis directly (pg-boss only via `enqueue` from `app/queue`)
-- Render HTML pages (those live in `client/pages` via `getData`)
+- Render HTML pages (those live in `client/pages` via `getData` → loaders)
 - Hand-roll a second JSON shape that diverges from `dto.ts`
 
 **Done when:** a curl against `/api/…` reaches the model/service and returns the right JSON.
@@ -95,15 +95,44 @@ await enqueue('parse_document', { documentId })
 
 **Done when:** `npm run worker` processes a message (log / side effect). Domain status only if a product record already needs it.
 
-## 5. Page last
+## 5. Page last (loader + route + screen)
 
-- Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`) — `getData` / `getMeta` + render screen.
+SSR data belongs in a **page loader**, not in the route module’s `getData` body.
+
+```
+app/controllers/<area>/
+  loaders.ts     # load*Page — gate + query + *Dto
+  dto.ts         # optional; admin has dto used only by loaders today
+```
+
+| Area | Loader module |
+|------|----------------|
+| `/admin/**` | `app/controllers/admin/loaders.ts` |
+| `/dashboard` | `app/controllers/dashboard/loaders.ts` |
+| `/` (home) | `app/controllers/home/loaders.ts` |
+| `/login` | `app/controllers/login/loaders.ts` |
+
+Then:
+
+- Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`) — thin `getData` / `getMeta` + render screen.
 - Page UI → `client/components/screen/<segment>/…` (see [frontend-patterns.md](frontend-patterns.md)); import the `.tsx` directly (no barrel).
-- `getData`: one dynamic `import` of `load*Page` from `app/controllers/<area>/loaders.ts` (admin, dashboard, home, login, …); seed lists with the same `*Dto` as `/api`.
-- Live updates in the screen via `/api` (`client/lib/api.ts`). Screens never import `@app/*`.
-- Client DTO types: `import type` re-exported from controller `dto.ts` through `@/lib/api` — do not redefine field lists in the page.
+- `getData` shape (keep this — Vite dual-bundle boundary):
 
-**Done when:** the happy path works end-to-end with presentation-only UI.
+```ts
+export async function getData(ctx: {
+  req: FastifyRequest
+  reply: FastifyReply
+}) {
+  const { loadDashboardPage } = await import('@app/controllers/dashboard/loaders')
+  return loadDashboardPage(ctx.req, ctx.reply)
+}
+```
+
+- Loader calls the same `*Dto` helpers as `/api`. Do not hand-map fields in the page.
+- Live updates in the screen via `/api` (`client/lib/api.ts`). Screens never import `@app/*`.
+- Client DTO types: `import type` re-exported from controller `dto.ts` through `@/lib/api`.
+
+**Done when:** the happy path works end-to-end with presentation-only UI and a one-import `getData`.
 
 ## 6. Tests
 
@@ -118,8 +147,8 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 ## Folder seam (checklist)
 
 ```
-client/       → pages + design system; getData may call models/dto/auth; screens must not own domain
-controllers/  → /api HTTP only (folder per resource)
+client/       → pages (thin getData → one loader) + design system; screens never @app
+controllers/  → /api {index,handlers,dto}  ·  SSR loaders.ts per area
 services/     → cross-model / job bodies / policy-heavy intake
 queue.ts      → handlers + enqueue + registerWorkers (stupid bus)
 db / mail / object-store / redis → other process infra singletons
@@ -128,5 +157,6 @@ models/       → domain + DB; never import adapters above
 
 ## Naming
 
-- Controllers named by resource folder (`posts/`, `documents/`, `work/`) — not grab-bags; not flat `*.ts` route modules.
-- One `register*Routes(app)` export from the controller package (`index.ts`); `cmd/web` boots API then Vite.
+- API controllers named by resource folder (`posts/`, `documents/`, `work/`) — not grab-bags; not flat `*.ts` route modules.
+- Page-loader areas named by surface (`admin/`, `dashboard/`, `home/`, `login/`) — `load*Page` exports.
+- One `register*Routes(app)` export from the API controller package (`index.ts`); `cmd/web` boots API then Vite.

@@ -29,5 +29,9 @@ A named message on the stupid bus (`enqueue(name, args)` in `app/queue.ts` → p
 _Avoid_: Treating pg-boss / Redis rows as app models
 
 **Document**:
-A User-owned uploaded file (`.md` / `.txt` / `.pdf`). Bytes live in the object store; metadata and extracted text live in Postgres (`documents`).
+A User-owned uploaded file (`.md` / `.txt` / `.pdf`). Bytes live in the object store; metadata and extracted text live in Postgres (`documents`). Upload enqueues `parse_document` on the stupid bus.
 _Avoid_: Attachment, asset, blob (when meaning the domain record)
+
+**Page loader**:
+A `load*Page` function in `app/controllers/<area>/loaders.ts` that owns gate + query + `*Dto` for SSR. Route `getData` imports one loader only.
+_Avoid_: Multi-importing `@app` or hand-mapping DTOs inside the page module

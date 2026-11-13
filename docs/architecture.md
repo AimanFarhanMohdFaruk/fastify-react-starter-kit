@@ -29,7 +29,7 @@ cmd/web
 Dependency rule: **inward only**. Models never import controllers, queue, or `client/`.
 
 ```
-client/pages  ──getData──►  app/controllers | app/models | app/services
+client/pages  ──getData──►  controllers/<area>/loaders ──► models | services | *Dto
 client/screen ──fetch────►  /api ──► controllers ──► models | services | enqueue
 cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► services (optional models)
 ```
@@ -38,9 +38,10 @@ cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► s
 |-------|------|------|
 | **Models** | `app/models/` | Schema, invariants, queries, Better Auth tables |
 | **Services** | `app/services/` | Cross-model or external side effect; upload policy; job bodies called from `queue` handlers |
-| **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
+| **API controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
+| **Page loaders** | `app/controllers/<area>/loaders.ts` | Gate + query + `*Dto` for SSR; page `getData` imports **one** `load*Page` |
 | **Queue** | `app/queue.ts` | Stupid bus: `handlers` registry, typed `enqueue`, `getBoss`, `registerWorkers` |
-| **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
+| **Views** | `client/pages/` + `client/components/screen/` | Thin route modules + presentation |
 
 Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, `app/queue.ts`. Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly — except the intentional thin `enqueue` call from a work controller/service.
 
@@ -50,13 +51,16 @@ Route modules live under `client/pages/` (folder → URL; home is `pages/index.t
 
 1. Browser `GET /dashboard`.
 2. `@fastify/react` runs the route’s `getData({ req, reply })` **on the server** before SSR.
-3. `getData` may dynamically `import('@app/…')` — session helpers, models — and return props (or `reply.redirect`).
-4. React SSR renders the default export; `useRouteContext().data` is the `getData` return value.
-5. HTML ships with hydrated route context. Client React takes over for navigation and interactivity.
+3. `getData` dynamically imports **one** page loader — e.g. `loadDashboardPage` from `app/controllers/dashboard/loaders.ts` — and returns its result (or the loader redirects).
+4. The loader owns session gate, model queries, and `*Dto` mapping. The page does not multi-import `@app` or hand-map fields.
+5. React SSR renders the default export; `useRouteContext().data` is the `getData` return value.
+6. HTML ships with hydrated route context. Client React takes over for navigation and interactivity.
 
 On **client-side** navigations, the same `getData` runs again on the server via an internal JSON endpoint (`/-/data/…`); the client does not execute model code.
 
 Screens under `client/components/screen/` receive props from the page. They never import `@app/*`; live updates go through `fetch('/api/…')`.
+
+Loader areas today: `admin`, `dashboard`, `home`, `login`.
 
 ## API request path (JSON)
 
@@ -69,7 +73,7 @@ Mutations and Better Auth stay on Fastify:
 
 Typical controller: `requireSession` on the route → parse → one model or service → `*Dto` → `reply.send`.
 
-Resource JSON for Post / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page `getData` call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
+Resource JSON for Post / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page **loaders** call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
 
 Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits, UI accept, and handler status mapping import from there.
 
@@ -108,9 +112,10 @@ Better Auth lives in `app/models/auth` (schema + server instance). The web proce
 
 | Need | Use |
 |------|-----|
-| Session in `getData` | `getSessionUser(req)` (null when banned) |
+| Session (in loaders) | `getSessionUser(req)` (null when banned) |
 | Admin flag / authz | `isAdmin(user)` — never `role === 'admin'` |
-| Gate `/admin/**` | `gateAdminPage(req, reply)` — check `{ ok }`, not truthiness |
+| Gate `/admin/**` | `loadAdmin*Page` → `gateAdminPage` (check `{ ok }`, not truthiness) |
+| Page SSR data | `getData` → one `load*Page` from `controllers/<area>/loaders.ts` |
 | Private `/api` | `requireSession` preHandler; `sessionUser(req)` in handlers |
 
 The browser uses the Better Auth client against the same `/api/auth/*` routes.

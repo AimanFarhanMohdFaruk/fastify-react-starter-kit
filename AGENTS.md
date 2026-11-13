@@ -6,9 +6,10 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 
 - **Fat models**, thin controllers; **services** only for cross-model / model+queue / policy-heavy intake.
 - Models never import `controllers/`, `queue`, or `client/` (enqueue from controllers/services only).
-- **Controllers** are always `app/controllers/<resource>/{index,handlers,dto}.ts` (even one route). Scan `index.ts` (`app.get/post` + `requireSession` when private). Exception: `auth.ts`.
-- **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers and page `getData` both call `*Dto`. Client types via `import type` through `@/lib/api`.
-- **Auth** — `requireSession` / `sessionUser` for private `/api`; `getSessionUser` / `gateAdminPage` / `isAdmin` for pages — never `role === 'admin'`. Page `getData` → one loader from `app/controllers/<area>/loaders.ts` (admin, dashboard, home, login).
+- **API controllers** — `app/controllers/<resource>/{index,handlers,dto}.ts` (even one route). Scan `index.ts` (`app.get/post` + `requireSession` when private). Exception: `auth.ts`.
+- **Page loaders** — `app/controllers/<area>/loaders.ts` (`load*Page`: gate + query + `*Dto`). Page `getData` does **one** dynamic import of that loader — no multi-import `@app` / hand-maps in the page. Areas today: `admin`, `dashboard`, `home`, `login`.
+- **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers **and** page loaders call `*Dto`. Client types via `import type` through `@/lib/api`.
+- **Auth** — `requireSession` / `sessionUser` for private `/api`; `getSessionUser` / `gateAdminPage` / `isAdmin` for pages — never `role === 'admin'`.
 - **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
 - **Queue** — stupid bus in `app/queue.ts`: `handlers` registry, typed `enqueue(name, args)`, `registerWorkers` (pg-boss). Do **not** require a domain row to enqueue.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.

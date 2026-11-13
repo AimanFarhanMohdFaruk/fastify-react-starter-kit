@@ -16,20 +16,38 @@ Next.js is a fine default for UI-first products and platform deploy. It is a poo
 
 This kit bets on boring Node: **one web process + one worker**, Postgres as the source of truth, React as presentation.
 
+## Inspirations
+
+Borrowed shapes, not cargo-cult copies. The kit is Node/Fastify; these are the mental models.
+
+| Borrowed from | What we took | Where it shows up |
+| ------------- | ------------ | ----------------- |
+| **Go** (`cmd/` + `internal`/`pkg` mindset) | Process entries are programs, not framework folders | `cmd/web`, `cmd/worker` — web vs worker are separate binaries |
+| **Rails** MVC | Fat models, thin controllers, views stay dumb | `app/models/`, `app/controllers/`, `client/pages` + `screen/` |
+| **Sidekiq** | Queue is a stupid bus — delivery state ≠ domain | `app/queue.ts` + pg-boss; no job row required to enqueue |
+| **[`@fastify/react`](https://vite.fastify.dev/react/)** | React SSR as a **plugin**, not the product | Vite SSR after `/api`; pages are route modules |
+| **Better Auth** | First-party sessions + admin role plugin | `app/models/auth`, `/api/auth/*`, `isAdmin` / `gateAdminPage` |
+| **Drizzle + Postgres** | Schema-as-code, boring SQL | `app/models/schema.ts` → `db/migrate/` |
+| **Weekly `_kit_template`** | Same MVC seams on a lighter Worker/D1 host | Graduate path: idea → this kit without a rewrite |
+
+Explicitly **not** borrowed: Next App Router / RSC conventions, framework-owned data cache, embedding the job consumer inside the web process.
+
 ## Approach (MVC)
 
 | Idea             | What it controls                                                                          |
 | ---------------- | ----------------------------------------------------------------------------------------- |
 | Fat models       | `app/models/` — schema, invariants, queries                                               |
-| Thin controllers | `app/controllers/<resource>/` — `index` + `handlers` + `dto`; JSON                        |
-| Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)                         |
+| Thin controllers | `app/controllers/<resource>/` — `/api` via `index` + `handlers` + `dto`                   |
+| Page loaders     | `app/controllers/<area>/loaders.ts` — gate + query + `*Dto` for SSR `getData`             |
+| Views            | `client/pages/` — thin `getData` (one loader import) + screen                             |
 | Queue            | `app/queue.ts` — stupid bus: `handlers`, typed `enqueue`, `registerWorkers` (pg-boss)     |
 | Services         | `app/services/` — cross-model, job bodies, upload policy                                  |
 
 **Rules of the road**
 
 - Models never import `controllers/`, `queue`, or `client/`.
-- Controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with `getData`.
+- API controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with page loaders.
+- Page `getData`: one dynamic `import` of `load*Page` from `loaders.ts` — do not multi-import `@app` or hand-map DTOs in the page.
 - Queue is not tied to a domain table — `enqueue(name, args)` only; job bodies live in services.
 - Controllers stay thin — no Drizzle / S3 / pg-boss directly (except the intentional `enqueue` call).
 - `client/` is presentation — no domain rules, no client-side business filter/sort; Admin via `isAdmin`, never `role === 'admin'`.
@@ -46,21 +64,19 @@ cmd/
   worker/main.ts        # calls registerWorkers()
 app/
   controllers/
-    auth.ts             # Better Auth mount
-    admin/ · dashboard/ · home/ · login/   # loaders.ts for getData
-    posts/              # CRUD → models/post
-    documents/          # upload → services/upload*
-    work/               # demo enqueue → queue.enqueue
-  models/               # fat domain (no controllers/queue/client)
-  services/             # shout (job), upload/parse-document
-  queue.ts              # handlers + enqueue + getBoss + registerWorkers
+    auth.ts                   # Better Auth mount + session helpers
+    posts/ · documents/ · work/   # /api — {index,handlers,dto}
+    admin/ · dashboard/ · home/ · login/   # SSR — loaders.ts (+ admin/dto)
+  models/                     # fat domain (no controllers/queue/client)
+  services/                   # shout, upload-document, parse-document
+  queue.ts                    # handlers + enqueue + getBoss + registerWorkers
   db.ts · redis.ts · mail.ts · object-store.ts
-db/migrate              # Drizzle migrations
-docker/init             # compose first-boot SQL (CREATE EXTENSION vector)
+db/migrate                    # Drizzle migrations
+docker/init                   # compose first-boot SQL (CREATE EXTENSION vector)
 client/
-  pages/                # route folders (…/index.tsx → URL; getData + UI)
-  components/           # design system (ui / layout / shell / motion / screen)
-  styles/               # Tailwind v4 + tweakcn theme (globals.css)
+  pages/                      # route modules — getData → one load*Page import
+  components/                 # design system (ui / layout / shell / motion / screen)
+  styles/                     # Tailwind v4 + tweakcn theme (globals.css)
 ```
 
 ### Design system

@@ -12,15 +12,15 @@
 
 ## Component folders
 
-| Folder | Role |
-|--------|------|
-| `components/ui` | Primitives (Button, Input, Field, …) — Base UI + CVA + tweakcn tokens |
-| `components/layout` | Structure (Container, Section, …) |
-| `components/shell` | App chrome (Main, ThemeProvider, providers) |
-| `components/motion-primitives` | Motion wrappers |
-| `components/screen` | **Page UI** — one folder per page, composed from ui/layout/shell |
-| `components/core` | Shared non-primitive helpers (images, etc.) |
-| `components/icons.tsx` | App icons |
+| Folder                         | Role                                                                  |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `components/ui`                | Primitives (Button, Input, Field, …) — Base UI + CVA + tweakcn tokens |
+| `components/layout`            | Structure (Container, Section, …)                                     |
+| `components/shell`             | App chrome (Main, ThemeProvider, providers)                           |
+| `components/motion-primitives` | Motion wrappers                                                       |
+| `components/screen`            | **Page UI** — one folder per page, composed from ui/layout/shell      |
+| `components/core`              | Shared non-primitive helpers (images, etc.)                           |
+| `components/icons.tsx`         | App icons                                                             |
 
 Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes (`bg-background`, `text-muted-foreground`) over one-off colors.
 
@@ -28,15 +28,17 @@ Theme tokens live in `client/styles/globals.css` (tweakcn). Prefer token classes
 
 Keep route modules thin; put the visible UI in `components/screen/`.
 
-| Layer | Path | Owns |
-|-------|------|------|
-| Route module | `client/pages/<segment>/index.tsx` | `getData`, `getMeta`, default export that reads `useRouteContext().data` and renders the screen |
-| Screen | `client/components/screen/<segment>/<Name>.tsx` | Layout/UI, local state, `/api` fetch — **no** `@app` imports |
+| Layer        | Path                                            | Owns                                                         |
+| ------------ | ----------------------------------------------- | ------------------------------------------------------------ |
+| Page loader  | `app/controllers/<area>/loaders.ts`             | Gate + query + `*Dto` (`load*Page`)                          |
+| Route module | `client/pages/<segment>/index.tsx`              | Thin `getData` (one loader import), `getMeta`, render screen |
+| Screen       | `client/components/screen/<segment>/<Name>.tsx` | Layout/UI, local state, `/api` fetch — **no** `@app` imports |
 
 Example (dashboard):
 
 ```
-client/pages/dashboard/index.tsx          → getData + <Dashboard email posts />
+app/controllers/dashboard/loaders.ts              → loadDashboardPage
+client/pages/dashboard/index.tsx                  → getData → one import → <Dashboard … />
 client/components/screen/dashboard/dashboard.tsx  → interactive UI
 ```
 
@@ -55,41 +57,53 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
 2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
-3. Prefer **one** dynamic `import('@app/…')` of a page loader (gate + query + dto). Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen.
+3. **One** dynamic `import` of `load*Page` from `app/controllers/<area>/loaders.ts`. Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen; do not multi-import models/dto inside `getData`.
 4. Auth gates live in the loader (`gateAdminPage` / `reply.redirect`); `getData` stays a thin call.
 5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
 
-**Session / Admin (do not invent):**
+```ts
+export async function getData(ctx: {
+  req: FastifyRequest
+  reply: FastifyReply
+}) {
+  const { loadDashboardPage } =
+    await import('@app/controllers/dashboard/loaders')
+  return loadDashboardPage(ctx.req, ctx.reply)
+}
+```
 
-| Need | Use |
-|------|-----|
-| Who is signed in? | `getSessionUser(req)` from `@app/controllers/auth` |
-| Is this User an Admin? | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'` |
-| Gate `/admin/**` | `app/controllers/admin/loaders.ts` (`loadAdmin*Page`) |
-| Dashboard / home / login | `app/controllers/{dashboard,home,login}/loaders.ts` |
-| Same JSON as `/api` | Loader calls controller `*Dto` helpers — do not hand-map fields in the page |
+**Loaders / session (do not invent):**
+
+| Need                     | Use                                                                         |
+| ------------------------ | --------------------------------------------------------------------------- |
+| Who is signed in?        | `getSessionUser(req)` inside a loader (`@app/controllers/auth`)             |
+| Is this User an Admin?   | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'`    |
+| Gate `/admin/**`         | `app/controllers/admin/loaders.ts` (`loadAdmin*Page`)                       |
+| Dashboard / home / login | `app/controllers/{dashboard,home,login}/loaders.ts`                         |
+| Same JSON as `/api`      | Loader calls controller `*Dto` helpers — do not hand-map fields in the page |
 
 ### Screens / live updates
 
 `client/components/screen/**` (and other components) **never** import `@app/*`. They talk to Fastify over HTTP:
 
-| Need | How |
-|------|-----|
-| Mutations / polls / refreshes | `fetch('/api/…')` — prefer helpers in `client/lib/api.ts` |
-| Auth UI (sign in/out, magic link) | Better Auth `authClient` → `/api/auth/*` |
-| Initial SSR props | From the page via props (from `getData`) — don’t re-fetch unless live |
-| DTO types | `import type { JobDto, … } from '@/lib/api'` (re-exported from controller dto) |
+| Need                              | How                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------- |
+| Mutations / polls / refreshes     | `fetch('/api/…')` — prefer helpers in `client/lib/api.ts`                       |
+| Auth UI (sign in/out, magic link) | Better Auth `authClient` → `/api/auth/*`                                        |
+| Initial SSR props                 | From the page via props (from `getData`) — don’t re-fetch unless live           |
+| DTO types                         | `import type { PostDto, … } from '@/lib/api'` (re-exported from controller dto) |
 
-Kit pattern for widgets (job list): **SSR seed from `getData` → props** (via `*Dto`), then `POST /api/…` + poll `GET /api/…` into screen state. Stop polling when no work is in flight.
+Kit pattern: **SSR seed from loader → `getData` → props** (via `*Dto`), then `POST /api/…` (+ poll when needed) into screen state.
 
 ### Boundaries
 
-| May | Must not |
-|-----|----------|
-| `getData` → dynamic `import('@app/…')` | Static `@app` / `app/models` import in screens or page top-level |
-| Screen: render props; local UI state; `/api` fetch | Domain rules; client-side business filter/sort |
-| Better Auth client for auth flows | Encode job/workflow logic in React |
-| Presentational hooks (`useMediaQuery`, theme) | Call Drizzle / pg-boss from `client/` |
+| May                                                | Must not                                        |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `getData` → one dynamic import of `load*Page`      | Multi-import `@app` / hand-map DTOs in the page |
+| Loader: gate + models + `*Dto`                     | Static `@app` in screens or page top-level      |
+| Screen: render props; local UI state; `/api` fetch | Domain rules; client-side business filter/sort  |
+| Better Auth client for auth flows                  | Encode job/workflow logic in React              |
+| Presentational hooks (`useMediaQuery`, theme)      | Call Drizzle / pg-boss from `client/`           |
 
 ## Design-system adds
 
