@@ -4,13 +4,13 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 
 ## Always
 
-- **Fat models**, thin controllers/workers; **services** only for cross-model / model+queue / policy-heavy intake.
-- Models never import `controllers/`, `workers/`, or `client/`.
+- **Fat models**, thin controllers; **services** only for cross-model / model+queue / policy-heavy intake.
+- Models never import `controllers/`, `queue`, or `client/` (enqueue from controllers/services only).
 - **Controllers** are always `app/controllers/<resource>/{index,handlers,dto}.ts` (even one route). Scan `index.ts` (`app.get/post` + `requireSession` when private). Exception: `auth.ts`.
 - **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers and page `getData` both call `*Dto`. Client types via `import type` through `@/lib/api`.
 - **Auth** — `requireSession` / `sessionUser` for private `/api`; `getSessionUser` / `gateAdminPage` / `isAdmin` for pages — never `role === 'admin'`.
 - **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
-- **Queue** — stupid bus: typed `enqueue(name, args)` in `app/queue.ts` (infra); names/args from `app/workers/handlers.ts`. Dispatch → `handlers[name]` → services. Do **not** require a domain row to enqueue.
+- **Queue** — stupid bus in `app/queue.ts`: `handlers` registry, typed `enqueue(name, args)`, `registerWorkers` (pg-boss). Do **not** require a domain row to enqueue.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.
 - Tests: **`node:test` + `node:assert`**, Testcontainers DB (never app `.env` `DATABASE_URL`), real Better Auth `testUtils` sessions — see testing patterns.
 

@@ -25,7 +25,7 @@ A User-owned content record (`posts` table). Synced CRUD via `/api/posts` — no
 _Avoid_: Job, report (removed); do not create a Post just to enqueue work
 
 **Work / queue job**:
-A named message on the stupid bus (`enqueue(name, args)` → pg-boss → `workers/handlers`). No domain row required. Demo handler: `shout`.
+A named message on the stupid bus (`enqueue(name, args)` in `app/queue.ts` → pg-boss → `handlers`). No domain row required. Demo handler: `shout`.
 _Avoid_: Treating pg-boss / Redis rows as app models
 
 **Document**:

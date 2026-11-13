@@ -31,18 +31,18 @@ Dependency rule: **inward only**. Models never import controllers, workers, or `
 ```
 client/pages  ──getData──►  app/controllers | app/models | app/services
 client/screen ──fetch────►  /api ──► controllers ──► models | services | enqueue
-cmd/worker    ──dequeue──►  app/workers ──► services (optional models)
+cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► services (optional models)
 ```
 
 | Layer | Path | Owns |
 |-------|------|------|
 | **Models** | `app/models/` | Schema, invariants, queries, Better Auth tables |
-| **Services** | `app/services/` | Cross-model or external side effect; upload policy; WORK called by workers |
+| **Services** | `app/services/` | Cross-model or external side effect; upload policy; WORK called from `queue` handlers |
 | **Controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
-| **Workers** | `app/workers/` | Stupid delivery: `dispatch` → `handlers[name](args)` → service |
+| **Queue** | `app/queue.ts` | Stupid bus: `handlers` registry, typed `enqueue`, `getBoss`, `registerWorkers` |
 | **Views** | `client/pages/` + `client/components/screen/` | Route modules + presentation |
 
-Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, `app/queue.ts` (`getBoss` / `enqueue`). Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly — except the intentional thin `enqueue` call from a work controller/service.
+Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, `app/queue.ts`. Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly — except the intentional thin `enqueue` call from a work controller/service.
 
 ## Page request path (HTML)
 
@@ -78,8 +78,8 @@ Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDo
 The queue is **not** coupled to a domain table. pg-boss holds delivery state (like Redis in Sidekiq); you do not model `pgboss.*`.
 
 1. Caller `enqueue(name, args)` via `app/queue.ts` (e.g. from `POST /api/work`).
-2. Worker registers `registerWorkers()` — one `boss.work` on `default`.
-3. Dispatch looks up `handlers[name]` and calls the service with `args`.
+2. Worker process calls `registerWorkers()` — one `boss.work` on `default`.
+3. Looks up `handlers[name]` and calls the service with `args`.
 4. Service may touch models if the product needs it — **not required** to enqueue.
 
 Demo: `shout` sleeps + logs. No row.

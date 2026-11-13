@@ -23,12 +23,12 @@ This kit bets on boring Node: **one web process + one worker**, Postgres as the 
 | Fat models       | `app/models/` — schema, invariants, queries, status transitions              |
 | Thin controllers | `app/controllers/<resource>/` — fluent `index.ts` + handlers/dto; JSON       |
 | Views            | `client/pages/` — `@fastify/react` route modules (`getData` + UI)            |
-| Queue            | `app/queue.ts` + `app/workers/` — stupid `enqueue(name, args)` → handlers → services |
-| Services         | `app/services/` — cross-model, WORK, or upload-like policy                         |
+| Queue            | `app/queue.ts` — handlers registry, typed `enqueue`, pg-boss consumer               |
+| Services         | `app/services/` — cross-model, WORK, or upload-like policy                          |
 
 **Rules of the road**
 
-- Models never import `controllers/`, `workers/`, or `client/`.
+- Models never import `controllers/`, `queue`, or `client/`.
 - Controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with `getData`.
 - Queue is not tied to a domain table; services own WORK / upload policy; controllers stay thin — no Drizzle / S3 directly.
 - `client/` is presentation — no domain rules, no client-side business filter/sort; Admin via `isAdmin`, never `role === 'admin'`.
@@ -46,8 +46,7 @@ app/models        # domain + Drizzle / Better Auth
 app/mail          # email transport + templates (Inbucket / Resend)
 app/services      # cross-model / WORK / upload policy
 app/controllers   # /api — <resource>/{index,handlers,dto}; posts + work + documents
-app/queue.ts      # getBoss + enqueue(name, args)
-app/workers       # dispatch + handlers map
+app/queue.ts      # handlers + enqueue + registerWorkers (stupid bus)
 db/migrate        # Drizzle migrations (generate + migrate)
 docker/init       # compose first-boot SQL (CREATE EXTENSION vector)
 client/pages      # route folders (…/index.tsx → URL; getData + UI)

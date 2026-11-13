@@ -82,13 +82,11 @@ Controller must not:
 
 Stupid bus — **no domain row required** to enqueue.
 
-- **Infra:** `app/queue.ts` — `getBoss` + typed `enqueue(name, args)` (peer of `db` / `mail`).
-- **Handlers:** register in `app/workers/handlers.ts` — **source of truth** for job names + arg types. `enqueue` is generic over this map.
-- **Delivery:** `app/workers/dispatch.ts` — one `boss.work` → look up handler.
-- Register from `cmd/worker/main.ts` only — never run the consumer inside `cmd/web`.
+- **All in `app/queue.ts`:** `handlers` map (names + args), typed `enqueue(name, args)`, `getBoss`, `registerWorkers`.
+- Register the consumer from `cmd/worker/main.ts` only — never inside `cmd/web`.
 
 ```ts
-// 1) add to handlers.ts:  parse_document: parseDocument,
+// 1) add to queue.ts handlers:  parse_document: parseDocument,
 // 2) call site is typed:
 await enqueue('shout', { message: 'hi', userId })
 // worker → handlers.shout → services/shout
@@ -122,8 +120,8 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 client/       → pages + design system; getData may call models/dto/auth; screens must not own domain
 controllers/  → /api HTTP only (folder per resource)
 services/     → cross-model / WORK / policy-heavy intake
-workers/      → dispatch + name→handler map (not the boss client)
-queue / db / mail / object-store / redis → process infra singletons
+queue.ts      → handlers + enqueue + registerWorkers (stupid bus)
+db / mail / object-store / redis → other process infra singletons
 models/       → domain + DB; never import adapters above
 ```
 

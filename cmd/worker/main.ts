@@ -1,6 +1,5 @@
 import 'dotenv/config'
-import { getBoss } from '../../app/queue'
-import { registerWorkers } from '../../app/workers/dispatch'
+import { getBoss, registerWorkers } from '../../app/queue'
 
 console.log('[worker] starting…')
 await getBoss()
