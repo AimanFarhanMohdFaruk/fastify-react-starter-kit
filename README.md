@@ -47,6 +47,7 @@ cmd/
 app/
   controllers/
     auth.ts             # Better Auth mount
+    admin/ · dashboard/ · home/ · login/   # loaders.ts for getData
     posts/              # CRUD → models/post
     documents/          # upload → services/upload*
     work/               # demo enqueue → queue.enqueue

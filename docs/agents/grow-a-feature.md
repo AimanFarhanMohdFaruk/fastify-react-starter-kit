@@ -99,7 +99,7 @@ await enqueue('parse_document', { documentId })
 
 - Route module → `client/pages/<segment>/index.tsx` (home: `pages/index.tsx`) — `getData` / `getMeta` + render screen.
 - Page UI → `client/components/screen/<segment>/…` (see [frontend-patterns.md](frontend-patterns.md)); import the `.tsx` directly (no barrel).
-- `getData`: one dynamic `import` of a page loader when the page needs gate/query/dto (see `app/controllers/admin/loaders.ts`); seed lists with the same `*Dto` as `/api`; Admin flag via `isAdmin(user)`.
+- `getData`: one dynamic `import` of `load*Page` from `app/controllers/<area>/loaders.ts` (admin, dashboard, home, login, …); seed lists with the same `*Dto` as `/api`.
 - Live updates in the screen via `/api` (`client/lib/api.ts`). Screens never import `@app/*`.
 - Client DTO types: `import type` re-exported from controller `dto.ts` through `@/lib/api` — do not redefine field lists in the page.
 

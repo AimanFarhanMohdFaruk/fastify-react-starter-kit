@@ -65,7 +65,8 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 |------|-----|
 | Who is signed in? | `getSessionUser(req)` from `@app/controllers/auth` |
 | Is this User an Admin? | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'` |
-| Gate `/admin/**` | `app/controllers/admin/loaders.ts` (`loadAdmin*Page`) — pages import one loader |
+| Gate `/admin/**` | `app/controllers/admin/loaders.ts` (`loadAdmin*Page`) |
+| Dashboard / home / login | `app/controllers/{dashboard,home,login}/loaders.ts` |
 | Same JSON as `/api` | Loader calls controller `*Dto` helpers — do not hand-map fields in the page |
 
 ### Screens / live updates

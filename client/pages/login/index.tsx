@@ -16,13 +16,8 @@ export async function getData(ctx: {
   req: FastifyRequest
   reply: FastifyReply
 }) {
-  const { getSessionUser } = await import('@app/controllers/auth')
-  const user = await getSessionUser(ctx.req)
-  if (user) {
-    ctx.reply.redirect('/dashboard')
-    return {}
-  }
-  return { error: null as string | null }
+  const { loadLoginPage } = await import('@app/controllers/login/loaders')
+  return loadLoginPage(ctx.req, ctx.reply)
 }
 
 export function getMeta() {

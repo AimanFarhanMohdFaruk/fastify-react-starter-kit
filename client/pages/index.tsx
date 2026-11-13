@@ -9,13 +9,8 @@ type HomeData = {
 }
 
 export async function getData(ctx: { req: FastifyRequest }) {
-  const { getSessionUser } = await import('@app/controllers/auth')
-  const { isAdmin } = await import('@app/models/admin')
-  const user = await getSessionUser(ctx.req)
-  return {
-    email: user?.email ?? null,
-    isAdmin: user ? isAdmin(user) : false,
-  }
+  const { loadHomePage } = await import('@app/controllers/home/loaders')
+  return loadHomePage(ctx.req)
 }
 
 export function getMeta() {
