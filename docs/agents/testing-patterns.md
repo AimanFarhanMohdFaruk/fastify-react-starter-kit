@@ -77,10 +77,9 @@ describe('/api/…', () => {
 })
 ```
 
-- Use `buildApiApp()` (controllers only — **no** Vite).
+- Use `buildApiApp()` (controllers only — **no** Vite; wraps `composeWebApp` from `app/config.ts`).
 - Always `t.after(() => app.close())`.
-- If a new controller is registered in `cmd/web`, register it in `test/harness/app.ts` too.
-- Multipart / upload limits in the harness must use the same service constants as `cmd/web` (e.g. `DOCUMENT_MAX_BYTES`).
+- Register new `/api` controllers in `app/config.ts` (`composeWebApp`) — harness and `cmd/web` both use it.
 
 **Done when:** inject covers the auth gate and JSON contract; domain details already covered (or added) at the model seam.
 
@@ -99,7 +98,7 @@ describe('/api/…', () => {
 |--------|---------|
 | `test/harness/db.ts` | Testcontainers URL, `applyTestEnv`, `truncateAppTables` |
 | `test/harness/auth.ts` | Test-only Better Auth + `testUtils()` (`createSessionUser`, cookies) |
-| `test/harness/app.ts` | Fastify app for `inject` |
+| `test/harness/app.ts` | `buildApiApp()` → `composeWebApp` without Vite for `inject` |
 | `test/run-tests.ts` | `npm test` bootstrap |
 | `test/e2e-web.ts` | Playwright `webServer` entry |
 

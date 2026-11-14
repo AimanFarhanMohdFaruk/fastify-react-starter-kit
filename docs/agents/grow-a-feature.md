@@ -32,7 +32,7 @@ Example: `shout` is a service with **no** model — the queue stays stupid. `upl
 
 ## 3. Thin controller (`/api`)
 
-Add `app/controllers/<resource>/` and register it from `cmd/web/main.ts` **and** `test/harness/app.ts` **before** `FastifyVite`. Reference: `app/controllers/posts/` (CRUD) or `app/controllers/work/` (enqueue).
+Add `app/controllers/<resource>/` and register it from `composeWebApp` in `app/config.ts` **before** optional Vite. Reference: `app/controllers/posts/` (CRUD) or `app/controllers/work/` (enqueue).
 
 ```
 app/controllers/<resource>/
@@ -139,7 +139,7 @@ export async function getData(ctx: {
 Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 
 - New model behavior → `test/models/…`
-- New `/api` route → register in `test/harness/app.ts` + `test/api/…` (keep multipart limits in sync via shared service constants)
+- New `/api` route → register in `app/config.ts` (`composeWebApp`) + `test/api/…`
 - New user-visible page flow → `test/e2e/…` only if model/`/api` cannot prove it
 
 **Done when:** `npm test` (and `npm run test:e2e` if you added an E2E) passes.
@@ -159,4 +159,4 @@ models/       → domain + DB; never import adapters above
 
 - API controllers named by resource folder (`posts/`, `documents/`, `work/`) — not grab-bags; not flat `*.ts` route modules.
 - Page-loader areas named by surface (`admin/`, `dashboard/`, `home/`, `login/`) — `load*Page` exports.
-- One `register*Routes(app)` export from the API controller package (`index.ts`); `cmd/web` boots API then Vite.
+- One `register*Routes(app)` export from the API controller package (`index.ts`); register it in `composeWebApp` (`app/config.ts`) before optional Vite.

@@ -1,16 +1,7 @@
 import 'dotenv/config'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import Fastify from 'fastify'
-import cookie from '@fastify/cookie'
-import formbody from '@fastify/formbody'
-import multipart from '@fastify/multipart'
-import FastifyVite from '@fastify/vite'
-import { registerAuthRoutes } from '../../app/controllers/auth'
-import { registerDocumentRoutes } from '../../app/controllers/documents'
-import { registerPostRoutes } from '../../app/controllers/posts'
-import { registerWorkRoutes } from '../../app/controllers/work'
-import { DOCUMENT_MAX_BYTES } from '../../app/services/upload-document'
+import { composeWebApp } from '../../app/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '../..')
@@ -29,38 +20,15 @@ const logger = isProd
     }
 
 async function main() {
-  const app = Fastify({
+  const app = await composeWebApp({
     logger,
-    // Needed so rate-limit keys on the real client IP behind a reverse proxy.
-    trustProxy: true,
-  })
-
-  await app.register(cookie)
-  await app.register(formbody)
-  await app.register(multipart, {
-    limits: {
-      files: 1,
-      fileSize: DOCUMENT_MAX_BYTES,
-    },
-  })
-  await app.register(import('@fastify/rate-limit'), {
     // Generous in local/Vite so HMR assets do not trip the limiter.
-    max: isProd ? 300 : 10_000,
-    timeWindow: '1 minute',
+    rateLimit: {
+      max: isProd ? 300 : 10_000,
+      timeWindow: '1 minute',
+    },
+    vite: { root, dev: !isProd },
   })
-
-  await registerAuthRoutes(app)
-  await registerPostRoutes(app)
-  await registerWorkRoutes(app)
-  await registerDocumentRoutes(app)
-
-  await app.register(FastifyVite, {
-    root,
-    dev: !isProd,
-    renderer: '@fastify/react',
-  })
-
-  await app.vite.ready()
 
   const port = Number(process.env.PORT ?? 3000)
   await app.listen({ port, host: '0.0.0.0' })

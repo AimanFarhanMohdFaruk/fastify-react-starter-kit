@@ -18,11 +18,12 @@ Both talk to the same Postgres (`DATABASE_URL`). Optional Redis (`REDIS_URL`) is
 Boot order on web matters: register **API controllers before** `FastifyVite`, so `/api` is never swallowed by the SPA/SSR catch-all.
 
 ```
-cmd/web
+cmd/web → composeWebApp (app/config.ts)
   ├── cookie + formbody + multipart
   ├── registerAuthRoutes / registerPostRoutes / registerWorkRoutes / registerDocumentRoutes   → /api/*
-  └── FastifyVite + @fastify/react            → HTML pages
+  └── optional FastifyVite + @fastify/react   → HTML pages (omit in test/harness)
 ```
+
 
 ## Layers (MVC)
 
@@ -41,6 +42,7 @@ cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► s
 | **API controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
 | **Page loaders** | `app/controllers/<area>/loaders.ts` | Gate + query + `*Dto` for SSR; page `getData` imports **one** `load*Page` |
 | **Queue** | `app/queue.ts` | Stupid bus: `handlers` registry, typed `enqueue`, `getBoss`, `registerWorkers` |
+| **Web composition** | `app/config.ts` | `composeWebApp` — plugins + `/api` registration + optional Vite; used by `cmd/web` and `test/harness` |
 | **Views** | `client/pages/` + `client/components/screen/` | Thin route modules + presentation |
 
 Infra singletons (shared by web + worker): `app/db.ts` (Drizzle), `app/mail.ts`, `app/object-store.ts`, `app/redis.ts`, `app/queue.ts`. Controllers do not open those connections or talk to pg-boss / S3 / mail / Redis directly — except the intentional thin `enqueue` call from a work controller/service.
