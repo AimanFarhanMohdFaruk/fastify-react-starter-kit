@@ -13,7 +13,9 @@ export async function getData(ctx: {
 }
 
 export function getMeta() {
-  return { title: 'starter — Fastify React kit' }
+  return {
+    title: 'starter — Fastify kit that grows with agents',
+  }
 }
 
 export default function HomePage() {
