@@ -14,7 +14,7 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 - **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
 - **Queue** — stupid bus in `app/queue/`: `handlers` registry, typed `enqueue(name, args)`, `registerWorkers`. Delivery via adapter (pg-boss prod; `createInlineAdapter` + `setQueueAdapter` in tests). Do **not** require a domain row to enqueue; do **not** add `parse:'sync'` on Document intake.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.
-- Tests: **`node:test` + `node:assert`**, Testcontainers DB (never app `.env` `DATABASE_URL`), real Better Auth `testUtils` sessions — see testing patterns.
+- Tests: **`node:test` + `node:assert`**, Testcontainers DB via `TEST_DATABASE_URL` (never truncate from ambient `.env` `DATABASE_URL`), real Better Auth `testUtils` sessions — see testing patterns.
 
 ## Docs
 

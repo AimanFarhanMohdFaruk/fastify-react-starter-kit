@@ -17,7 +17,7 @@ SSR `getData` has **no** dedicated harness in v1 — Playwright hits the pages. 
 ## Hard rules
 
 1. Node tests use **`node:test`** and **`node:assert/strict`** only — no Vitest, Jest, or other runners.
-2. Tests **never** use the developer/production `DATABASE_URL` from `.env`. The runner owns an isolated Postgres URL (Testcontainers).
+2. Tests **never** use the developer/production `DATABASE_URL` from `.env` for destructive resets. The runner owns an isolated Postgres URL (Testcontainers) and sets **`TEST_DATABASE_URL`** (mirrored into `DATABASE_URL` for app modules). Truncate refuses unless `TEST_DATABASE_URL` is set and names `kit_test`.
 3. Auth in tests uses **real Better Auth sessions** (first-party test helpers) — no stubbing `getSessionUser` or forging unsigned cookies.
 4. Do not add a fourth lane for `getData` or for React Testing Library unless this strategy is deliberately revised.
 
@@ -33,7 +33,7 @@ SSR `getData` has **no** dedicated harness in v1 — Playwright hits the pages. 
 - Start **Testcontainers** with `pgvector/pgvector:pg18` (same family as local Compose).
 - Take the URI from the container API (`getConnectionUri()`), migrate with the kit’s `db/migrate` folder, then run tests.
 - Do **not** load `.env` for DB config in the test process. Set the test URI before first import of modules that open a pool (today `app/db.ts` reads `DATABASE_URL` at load — the harness must supply a test-owned URL and avoid dotenv clobbering it with the app `.env`).
-- **Reset:** truncate app tables between tests (or per file). Container snapshot/restore after migrate is an allowed optimization, not required.
+- **Reset:** truncate app tables between tests (or per file). Same idea as Go [`dbcleaner`](https://github.com/mokevnin/dbcleaner): a dedicated test URI (`TEST_DATABASE_URL`) **and** a name guard (`kit_test`). Ambient `DATABASE_URL` alone cannot truncate. Container snapshot/restore after migrate is an allowed optimization, not required.
 
 ### `/api` with `inject`
 

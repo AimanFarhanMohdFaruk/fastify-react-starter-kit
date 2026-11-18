@@ -23,7 +23,7 @@ Always:
 1. Use `node:test` + `node:assert/strict` only.
 2. Truncate in `beforeEach` via `truncateAppTables()` from `test/harness/db`.
 3. Create users/sessions with `createSessionUser` / helpers from `test/harness/auth` — not stubs.
-4. Never read developer `.env` `DATABASE_URL` (the runner owns Testcontainers).
+4. Never read developer `.env` `DATABASE_URL` for resets (the runner owns Testcontainers and sets `TEST_DATABASE_URL`).
 
 ### Model test
 
