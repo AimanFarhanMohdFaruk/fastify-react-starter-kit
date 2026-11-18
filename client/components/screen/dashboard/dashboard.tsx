@@ -10,6 +10,7 @@ import {
   createPost,
   deletePost,
   enqueueShout,
+  fetchDocuments,
   updatePost,
   uploadDocument,
   type DocumentDto,
@@ -271,6 +272,8 @@ export function Dashboard({
               try {
                 const doc = await uploadDocument(file)
                 setDocuments((prev) => [doc, ...prev])
+                const list = await fetchDocuments()
+                setDocuments(list)
                 form.reset()
                 setFlash(`Uploaded ${doc.filename} (${doc.status})`)
               } catch (err) {
