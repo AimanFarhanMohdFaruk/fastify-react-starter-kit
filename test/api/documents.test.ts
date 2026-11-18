@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { afterEach, beforeEach, describe, test } from 'node:test'
 import type { ObjectStore, PutObjectInput } from '../../app/object-store'
 import { setObjectStoreForTests } from '../../app/object-store'
+import { createInlineAdapter, setQueueAdapter } from '../../app/queue'
 import { buildApiApp } from '../harness/app'
 import { createSessionUser } from '../harness/auth'
 import { truncateAppTables } from '../harness/db'
@@ -63,10 +64,14 @@ describe('/api/documents', () => {
   beforeEach(async () => {
     await truncateAppTables()
     setObjectStoreForTests(memoryStore())
+    // Record-only would leave status uploaded; execute inline so parse runs
+    // without starting pg-boss (prod still uses the pg-boss adapter).
+    setQueueAdapter(createInlineAdapter())
   })
 
   afterEach(() => {
     setObjectStoreForTests(null)
+    setQueueAdapter(null)
   })
 
   test('POST returns 401 without session', async (t) => {
@@ -105,7 +110,7 @@ describe('/api/documents', () => {
       byteSize: number
     }
     assert.equal(doc.filename, 'notes.md')
-    // Parse is enqueued on the stupid bus — response is uploaded, not ready yet.
+    // Handler returns the pre-parse row; inline adapter then runs parse_document.
     assert.equal(doc.status, 'uploaded')
     assert.equal(doc.byteSize, Buffer.byteLength('# Kit'))
 

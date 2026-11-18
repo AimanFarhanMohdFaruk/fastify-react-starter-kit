@@ -1,6 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { db } from '../db'
+import { ValidationError } from '../errors'
 import { posts } from './schema'
 
 /** Fat model — Post aggregate + persistence (CRUD demo) */
@@ -10,7 +11,7 @@ export async function createPost(
   input: { title: string; body?: string },
 ) {
   const title = input.title.trim()
-  if (!title) throw new Error('Title required')
+  if (!title) throw new ValidationError('Title required')
   const body = (input.body ?? '').trim()
   const id = randomUUID()
   const [row] = await db
@@ -48,7 +49,7 @@ export async function updatePostForUser(
 
   const title =
     input.title !== undefined ? input.title.trim() : existing.title
-  if (!title) throw new Error('Title required')
+  if (!title) throw new ValidationError('Title required')
   const body =
     input.body !== undefined ? input.body.trim() : existing.body
 

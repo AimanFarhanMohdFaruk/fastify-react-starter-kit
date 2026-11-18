@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import { Transform, type Readable } from 'node:stream'
+import { AppError } from '../errors'
 import { createDocument } from '../models/document'
 import { getObjectStore, type ObjectStore } from '../object-store'
 import { enqueue } from '../queue'
-import { parseDocument, type ParseDocumentDeps } from './parse-document'
+import type { ParseDocumentDeps } from './parse-document'
 
 const ALLOWED_CONTENT_TYPES = new Set([
   'text/plain',
@@ -21,13 +22,13 @@ export const DOCUMENT_ACCEPT =
 
 export type UploadDocumentErrorKind = 'unsupported_type' | 'too_large'
 
-export class UploadDocumentError extends Error {
-  readonly kind: UploadDocumentErrorKind
+/** Document intake failure — mapped by composeWebApp setErrorHandler. */
+export class UploadDocumentError extends AppError {
+  declare readonly kind: UploadDocumentErrorKind
 
   constructor(kind: UploadDocumentErrorKind, message: string) {
-    super(message)
+    super(400, message, kind)
     this.name = 'UploadDocumentError'
-    this.kind = kind
   }
 }
 
@@ -40,12 +41,11 @@ export type UploadFileInput = {
 export type UploadDocumentDeps = ParseDocumentDeps & {
   objectStore?: ObjectStore
   /**
-   * After PutObject + row insert:
-   * - `'queue'` (default) — enqueue `parse_document` (web stays fast)
-   * - `'sync'` — parse inline (unit tests)
-   * - `false` — skip parse
+   * After PutObject + row insert, enqueue `parse_document` (default true).
+   * Set false for upload-only unit tests. Tests that need parse use the
+   * inline queue adapter — do not reintroduce parse:'sync'.
    */
-  parse?: 'queue' | 'sync' | false
+  enqueueParse?: boolean
 }
 
 export function sanitizeFilename(name: string): string {
@@ -96,9 +96,9 @@ function countingTransform(): { stream: Transform; getByteSize: () => number } {
 }
 
 /**
- * Stream file bytes to the object store, persist a documents row, then parse
- * (queue by default). Orphan objects are possible if the DB insert fails after
- * PutObject (acceptable for v1).
+ * Stream file bytes to the object store, persist a documents row, then
+ * enqueue parse (default). Orphan objects are possible if the DB insert
+ * fails after PutObject (acceptable for v1).
  */
 export async function uploadDocument(
   userId: string,
@@ -126,9 +126,7 @@ export async function uploadDocument(
     status: 'uploaded',
   })
 
-  const mode = deps.parse ?? 'queue'
-  if (mode === false) return doc
-  if (mode === 'sync') return parseDocument({ documentId: doc.id }, deps)
+  if (deps.enqueueParse === false) return doc
 
   await enqueue('parse_document', { documentId: doc.id })
   return doc

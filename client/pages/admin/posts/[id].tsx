@@ -1,15 +1,9 @@
 import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { AdminPostDetailData } from '@app/controllers/admin/loaders'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
 import { AdminPostDetail } from '@/components/screen/admin/posts'
-import type { AdminPostDto } from '@/lib/api'
-
-type Data = {
-  forbidden?: boolean
-  post?: AdminPostDto | null
-  notFound?: boolean
-}
 
 export async function getData(ctx: {
   req: FastifyRequest
@@ -24,10 +18,11 @@ export function getMeta() {
 }
 
 export default function AdminPostDetailPage() {
-  const { data } = useRouteContext() as { data: Data }
-  if (data.forbidden) return <AdminForbidden />
-  if (data.notFound || !data.post) {
+  const { data } = useRouteContext() as { data: AdminPostDetailData }
+  if ('forbidden' in data && data.forbidden) return <AdminForbidden />
+  if ('notFound' in data && data.notFound) {
     return <p className="p-8 text-muted-foreground text-sm">Post not found</p>
   }
+  if (!('post' in data)) return null
   return <AdminPostDetail post={data.post} />
 }

@@ -26,7 +26,7 @@ Add `app/services/` when the use-case spans **more than one model** or model + q
 
 Example: `shout` is a service with **no** model — the queue stays stupid. `uploadDocument` is a service (store + model + enqueue `parse_document`).
 
-**Upload / policy-heavy intake:** own limits, accept strings, and typed failures in the service (see `upload-document.ts`: `DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, `UploadDocumentError`). Multipart boot, harness, UI, and handlers **import** those — do not scatter magic numbers or scrape `Error.message` for HTTP status.
+**Upload / policy-heavy intake:** own limits, accept strings, and typed failures in the service (see `upload-document.ts`: `DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, `UploadDocumentError` extends `AppError`). Multipart boot, harness, UI, and handlers **import** those — do not scatter magic numbers or scrape `Error.message` for HTTP status.
 
 **Done when:** either you called the model directly from the controller, or a named service owns the multi-step flow. Controllers do not inline orchestration.
 
@@ -41,7 +41,7 @@ app/controllers/<resource>/
   dto.ts         # HTTP input + response shaping (not domain)
 ```
 
-**Always** use the folder layout — even for a single route. No flat `app/controllers/<resource>.ts` route modules. Exception: `app/controllers/auth.ts` (Better Auth catch-all, `getSessionUser`, `requireSession`, `sessionUser`, `gateAdminPage`).
+**Always** use the folder layout — even for a single route. No flat `app/controllers/<resource>.ts` route modules. Exceptions: `app/controllers/auth.ts` (Better Auth catch-all, `getSessionUser`, `requireSession`, `sessionUser`); `app/controllers/page-gate.ts` (`gatePage` for SSR policies).
 
 `index.ts` example (CRUD):
 
@@ -60,7 +60,7 @@ export async function registerPostRoutes(app: FastifyInstance) {
 | Private `/api` | `{ preHandler: requireSession }` on the route; handlers use `sessionUser(req)` |
 | Public `/api` | Omit `requireSession` |
 | Response JSON | `*Dto` helpers in `dto.ts` — same helpers page **loaders** call |
-| Typed service failures | `instanceof UploadDocumentError` (or similar) → status; no substring matching |
+| Typed domain failures | Throw `ValidationError` / `NotFoundError` / `ForbiddenError` / `UploadDocumentError` from `app/errors` — `composeWebApp` maps them; no handler try/catch for status; no substring matching |
 
 Controller may:
 
@@ -82,7 +82,7 @@ Controller must not:
 
 Stupid bus — **no domain row required** to enqueue.
 
-- **All in `app/queue.ts`:** `handlers` map (names + args), typed `enqueue(name, args)`, `getBoss`, `registerWorkers`.
+- **All in `app/queue/`:** `handlers` map (names + args), typed `enqueue(name, args)`, `registerWorkers`, adapters (`pg-boss` / `inline`).
 - Register the consumer from `cmd/worker/main.ts` only — never inside `cmd/web`.
 
 ```ts
@@ -150,7 +150,7 @@ Add coverage at the right seam (see [testing-patterns.md](testing-patterns.md)):
 client/       → pages (thin getData → one loader) + design system; screens never @app
 controllers/  → /api {index,handlers,dto}  ·  SSR loaders.ts per area
 services/     → cross-model / job bodies / policy-heavy intake
-queue.ts      → handlers + enqueue + registerWorkers (stupid bus)
+queue/         → handlers + enqueue + adapters + registerWorkers (stupid bus)
 db / mail / object-store / redis → other process infra singletons
 models/       → domain + DB; never import adapters above
 ```

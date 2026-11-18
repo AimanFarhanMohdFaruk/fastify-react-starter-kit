@@ -1,17 +1,8 @@
 import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { DashboardPageData } from '@app/controllers/dashboard/loaders'
 
 import { Dashboard } from '@/components/screen/dashboard/dashboard'
-import type { DocumentDto, PostDto } from '@/lib/api'
-
-type DashboardData = {
-  email: string
-  isAdmin: boolean
-  posts: PostDto[]
-  documents: DocumentDto[]
-  documentAccept: string
-  documentMaxBytes: number
-}
 
 export async function getData(ctx: {
   req: FastifyRequest
@@ -26,13 +17,14 @@ export function getMeta() {
 }
 
 export default function DashboardPage() {
-  const { data } = useRouteContext() as { data: DashboardData }
+  const { data } = useRouteContext() as { data: DashboardPageData }
+  if (!('email' in data)) return null
   return (
     <Dashboard
       email={data.email}
       isAdmin={data.isAdmin}
       posts={data.posts}
-      documents={data.documents ?? []}
+      documents={data.documents}
       documentAccept={data.documentAccept}
       documentMaxBytes={data.documentMaxBytes}
     />

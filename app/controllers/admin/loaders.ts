@@ -9,7 +9,7 @@ import {
   listPostsForAdmin,
   listUsersForAdmin,
 } from '../../models/admin'
-import { gateAdminPage } from '../auth'
+import { gatePage } from '../page-gate'
 import {
   adminPostDetailDto,
   adminPostListDto,
@@ -20,25 +20,13 @@ import {
 
 type ForbiddenOrEmpty = { forbidden: true } | Record<string, never>
 
-async function gateOrDeny(
-  req: FastifyRequest,
-  reply: FastifyReply,
-): Promise<{ ok: true } | { ok: false; data: ForbiddenOrEmpty }> {
-  const gate = await gateAdminPage(req, reply)
-  if (gate.ok) return { ok: true }
-  return {
-    ok: false,
-    data: gate.kind === 'forbidden' ? { forbidden: true } : {},
-  }
-}
-
 export type AdminIndexData = ForbiddenOrEmpty
 
 export async function loadAdminIndexPage(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<AdminIndexData> {
-  const gate = await gateOrDeny(req, reply)
+  const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
   reply.redirect('/admin/users')
   return {}
@@ -53,7 +41,7 @@ export async function loadAdminUsersPage(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<AdminUsersListData> {
-  const gate = await gateOrDeny(req, reply)
+  const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
   const users = await listUsersForAdmin()
   return { users: users.map(adminUserDto) }
@@ -69,7 +57,7 @@ export async function loadAdminUserPage(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<AdminUserDetailData> {
-  const gate = await gateOrDeny(req, reply)
+  const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
 
   const id = String((req.params as { id?: string }).id ?? '')
@@ -90,7 +78,7 @@ export async function loadAdminPostsPage(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<AdminPostsListData> {
-  const gate = await gateOrDeny(req, reply)
+  const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
   const rows = await listPostsForAdmin()
   return { posts: rows.map(adminPostListDto) }
@@ -106,7 +94,7 @@ export async function loadAdminPostPage(
   req: FastifyRequest,
   reply: FastifyReply,
 ): Promise<AdminPostDetailData> {
-  const gate = await gateOrDeny(req, reply)
+  const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
 
   const id = (req.params as { id?: string }).id

@@ -14,6 +14,7 @@ import { registerAuthRoutes } from './controllers/auth'
 import { registerDocumentRoutes } from './controllers/documents'
 import { registerPostRoutes } from './controllers/posts'
 import { registerWorkRoutes } from './controllers/work'
+import { AppError } from './errors'
 import { DOCUMENT_MAX_BYTES } from './services/upload-document'
 
 export type ComposeWebAppOptions = {
@@ -30,6 +31,16 @@ export async function composeWebApp(
     logger: opts.logger ?? false,
     // Needed so rate-limit keys on the real client IP behind a reverse proxy.
     trustProxy: true,
+  })
+
+  app.setErrorHandler((err, req, reply) => {
+    if (err instanceof AppError) {
+      const body: { error: string; kind?: string } = { error: err.message }
+      if (err.kind !== undefined) body.kind = err.kind
+      return reply.code(err.statusCode).send(body)
+    }
+    req.log.error({ err }, 'unhandled error')
+    return reply.code(500).send({ error: 'Internal Server Error' })
   })
 
   await app.register(cookie)

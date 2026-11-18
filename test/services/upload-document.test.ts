@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict'
 import { Readable } from 'node:stream'
-import { beforeEach, describe, test } from 'node:test'
+import { afterEach, beforeEach, describe, test } from 'node:test'
 import type { ObjectStore, PutObjectInput } from '../../app/object-store'
+import { setObjectStoreForTests } from '../../app/object-store'
 import { listDocumentsForUser } from '../../app/models/document'
+import {
+  createInlineAdapter,
+  setQueueAdapter,
+} from '../../app/queue'
+import { parseDocument } from '../../app/services/parse-document'
 import {
   sanitizeFilename,
   uploadDocument,
@@ -51,6 +57,12 @@ function memoryStore() {
 describe('uploadDocument', () => {
   beforeEach(async () => {
     await truncateAppTables()
+    setQueueAdapter(createInlineAdapter())
+  })
+
+  afterEach(() => {
+    setQueueAdapter(null)
+    setObjectStoreForTests(null)
   })
 
   test('sanitizeFilename strips path segments', () => {
@@ -58,9 +70,10 @@ describe('uploadDocument', () => {
     assert.equal(sanitizeFilename('a/b/notes.md'), 'notes.md')
   })
 
-  test('streams bytes to object store, creates row, and parses text', async () => {
+  test('streams bytes, enqueues parse via inline adapter, marks ready', async () => {
     const { user } = await createSessionUser({ email: 'upload-svc@example.com' })
     const { store, objects } = memoryStore()
+    setObjectStoreForTests(store)
 
     const doc = await uploadDocument(
       user.id,
@@ -69,21 +82,21 @@ describe('uploadDocument', () => {
         contentType: 'text/markdown',
         body: Readable.from(['# Hello']),
       },
-      { objectStore: store, parse: 'sync' },
+      { objectStore: store },
     )
 
-    assert.equal(doc.status, 'ready')
-    assert.equal(doc.extractedText, '# Hello')
-    assert.equal(doc.filename, 'kit.md')
-    assert.equal(doc.byteSize, Buffer.byteLength('# Hello'))
-    assert.ok(doc.key.startsWith(`${user.id}/`))
-    assert.equal(objects.get(doc.key)?.toString('utf8'), '# Hello')
-
+    assert.equal(doc.status, 'uploaded')
     const listed = await listDocumentsForUser(user.id)
     assert.equal(listed.length, 1)
+    assert.equal(listed[0].status, 'ready')
+    assert.equal(listed[0].extractedText, '# Hello')
+    assert.equal(listed[0].filename, 'kit.md')
+    assert.equal(listed[0].byteSize, Buffer.byteLength('# Hello'))
+    assert.ok(listed[0].key.startsWith(`${user.id}/`))
+    assert.equal(objects.get(listed[0].key)?.toString('utf8'), '# Hello')
   })
 
-  test('parses PDF via injected parsePdf', async () => {
+  test('PDF parse with injected parsePdf after upload-only', async () => {
     const { user } = await createSessionUser({ email: 'upload-pdf@example.com' })
     const { store } = memoryStore()
 
@@ -94,16 +107,23 @@ describe('uploadDocument', () => {
         contentType: 'application/pdf',
         body: Readable.from([Buffer.from('%PDF-fake')]),
       },
-      {
-        objectStore: store,
-        parse: 'sync',
-        parsePdf: async () => ({ pages: [{ text: 'Page one' }, { text: 'Page two' }] }),
-      },
+      { objectStore: store, enqueueParse: false },
     )
 
-    assert.equal(doc.status, 'ready')
+    assert.equal(doc.status, 'uploaded')
     assert.equal(doc.contentType, 'application/pdf')
-    assert.equal(doc.extractedText, 'Page one\nPage two')
+
+    const ready = await parseDocument(
+      { documentId: doc.id },
+      {
+        objectStore: store,
+        parsePdf: async () => ({
+          pages: [{ text: 'Page one' }, { text: 'Page two' }],
+        }),
+      },
+    )
+    assert.equal(ready.status, 'ready')
+    assert.equal(ready.extractedText, 'Page one\nPage two')
   })
 
   test('rejects disallowed content types', async () => {
@@ -118,7 +138,7 @@ describe('uploadDocument', () => {
             contentType: 'application/octet-stream',
             body: Readable.from(['x']),
           },
-          { objectStore: store },
+          { objectStore: store, enqueueParse: false },
         ),
       (err: unknown) =>
         err instanceof UploadDocumentError && err.kind === 'unsupported_type',

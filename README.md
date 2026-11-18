@@ -24,9 +24,9 @@ Borrowed shapes, not cargo-cult copies. The kit is Node/Fastify; these are the m
 | ------------- | ------------ | ----------------- |
 | **Go** (`cmd/` + `internal`/`pkg` mindset) | Process entries are programs, not framework folders | `cmd/web`, `cmd/worker` — web vs worker are separate binaries |
 | **Rails** MVC | Fat models, thin controllers, views stay dumb | `app/models/`, `app/controllers/`, `client/pages` + `screen/` |
-| **Sidekiq** | Queue is a stupid bus — delivery state ≠ domain | `app/queue.ts` + pg-boss; no job row required to enqueue |
+| **Sidekiq** | Queue is a stupid bus — delivery state ≠ domain | `app/queue/` + pg-boss adapter; no job row required to enqueue |
 | **[`@fastify/react`](https://vite.fastify.dev/react/)** | React SSR as a **plugin**, not the product | Vite SSR after `/api`; pages are route modules |
-| **Better Auth** | First-party sessions + admin role plugin | `app/models/auth`, `/api/auth/*`, `isAdmin` / `gateAdminPage` |
+| **Better Auth** | First-party sessions + admin role plugin | `app/models/auth`, `/api/auth/*`, `isAdmin` / `gatePage` |
 | **Drizzle + Postgres** | Schema-as-code, boring SQL | `app/models/schema.ts` → `db/migrate/` |
 | **Weekly `_kit_template`** | Same MVC seams on a lighter Worker/D1 host | Graduate path: idea → this kit without a rewrite |
 
@@ -40,13 +40,13 @@ Explicitly **not** borrowed: Next App Router / RSC conventions, framework-owned 
 | Thin controllers | `app/controllers/<resource>/` — `/api` via `index` + `handlers` + `dto`                   |
 | Page loaders     | `app/controllers/<area>/loaders.ts` — gate + query + `*Dto` for SSR `getData`             |
 | Views            | `client/pages/` — thin `getData` (one loader import) + screen                             |
-| Queue            | `app/queue.ts` — stupid bus: `handlers`, typed `enqueue`, `registerWorkers` (pg-boss)     |
+| Queue            | `app/queue/` — stupid bus: `handlers`, typed `enqueue`, adapters, `registerWorkers`       |
 | Services         | `app/services/` — cross-model, job bodies, upload policy                                  |
 
 **Rules of the road**
 
 - Models never import `controllers/`, `queue`, or `client/`.
-- API controllers: folder per resource (`index` + `handlers` + `dto`); `requireSession` on private `/api`; one `*Dto` shared with page loaders.
+- API controllers: folder per resource (`index` + `handlers` + `dto`); register via `composeWebApp` in `app/config.ts`; `requireSession` on private `/api`; one `*Dto` shared with page loaders.
 - Page `getData`: one dynamic `import` of `load*Page` from `loaders.ts` — do not multi-import `@app` or hand-map DTOs in the page.
 - Queue is not tied to a domain table — `enqueue(name, args)` only; job bodies live in services.
 - Controllers stay thin — no Drizzle / S3 / pg-boss directly (except the intentional `enqueue` call).
@@ -60,16 +60,17 @@ Architecture (processes, seams, request paths): [docs/architecture.md](docs/arch
 
 ```
 cmd/
-  web/main.ts           # Fastify + /api + @fastify/vite
+  web/main.ts           # composeWebApp({ vite }) + listen
   worker/main.ts        # calls registerWorkers()
 app/
+  config.ts                   # composeWebApp — plugins + register*Routes + optional Vite
   controllers/
     auth.ts                   # Better Auth mount + session helpers
     posts/ · documents/ · work/   # /api — {index,handlers,dto}
     admin/ · dashboard/ · home/ · login/   # SSR — loaders.ts (+ admin/dto)
   models/                     # fat domain (no controllers/queue/client)
   services/                   # shout, upload-document, parse-document
-  queue.ts                    # handlers + enqueue + getBoss + registerWorkers
+  queue/                       # handlers + enqueue + adapters (pg-boss / inline) + registerWorkers
   db.ts · redis.ts · mail.ts · object-store.ts
 db/migrate                    # Drizzle migrations
 docker/init                   # compose first-boot SQL (CREATE EXTENSION vector)

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { beforeEach, describe, test } from 'node:test'
+import { afterEach, beforeEach, describe, test } from 'node:test'
+import { createInlineAdapter, setQueueAdapter } from '../../app/queue'
 import { buildApiApp } from '../harness/app'
 import { createSessionUser } from '../harness/auth'
 import { truncateAppTables } from '../harness/db'
@@ -7,6 +8,11 @@ import { truncateAppTables } from '../harness/db'
 describe('/api/work', () => {
   beforeEach(async () => {
     await truncateAppTables()
+    setQueueAdapter(createInlineAdapter())
+  })
+
+  afterEach(() => {
+    setQueueAdapter(null)
   })
 
   test('POST returns 401 without session', async () => {
@@ -55,7 +61,8 @@ describe('/api/work', () => {
     }
     assert.equal(body.enqueued, true)
     assert.equal(body.name, 'shout')
-    assert.ok(body.jobId)
+    // Inline adapter returns null job id; pg-boss returns a real id in prod.
+    assert.equal(body.jobId, null)
     await app.close()
   })
 })

@@ -1,6 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { auth, isUserBanned, type SessionUser } from '../models/auth'
-import { isAdmin } from '../models/admin'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -50,28 +49,6 @@ export function sessionUser(req: FastifyRequest): SessionUser {
     throw new Error('sessionUser: requireSession preHandler missing')
   }
   return req.user
-}
-
-export type AdminGate =
-  | { ok: true; user: SessionUser }
-  | { ok: false; kind: 'redirect' }
-  | { ok: false; kind: 'forbidden' }
-
-/** SSR gate for `/admin/**` getData — model owns isAdmin. */
-export async function gateAdminPage(
-  req: FastifyRequest,
-  reply: FastifyReply,
-): Promise<AdminGate> {
-  const user = await getSessionUser(req)
-  if (!user) {
-    reply.redirect('/login')
-    return { ok: false, kind: 'redirect' }
-  }
-  if (!isAdmin(user)) {
-    reply.code(403)
-    return { ok: false, kind: 'forbidden' }
-  }
-  return { ok: true, user }
 }
 
 function fromFastifyHeaders(req: FastifyRequest) {

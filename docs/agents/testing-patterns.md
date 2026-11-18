@@ -104,6 +104,19 @@ describe('/api/…', () => {
 
 Extend these instead of inventing a second DB or auth path.
 
+## Queue in Node tests
+
+For anything that calls `enqueue` (Document upload, `/api/work`, …):
+
+```ts
+import { createInlineAdapter, setQueueAdapter } from '../../app/queue'
+
+beforeEach(() => setQueueAdapter(createInlineAdapter()))
+afterEach(() => setQueueAdapter(null))
+```
+
+Inline `send` runs the job immediately and records `{ name, args }`. Do **not** add `parse:'sync'` on Document intake — the adapter is the test seam. Do **not** start the worker process in Node tests.
+
 ## Must not
 
 - Vitest, Jest, or another Node runner.
@@ -111,3 +124,4 @@ Extend these instead of inventing a second DB or auth path.
 - Stub `getSessionUser` or forge unsigned cookies.
 - Put `testUtils()` on production `app/models/auth`.
 - Add React Testing Library / `getData`-only suites without revising [docs/testing.md](../testing.md).
+- Reintroduce Document `parse:'sync'` — use `setQueueAdapter(createInlineAdapter())`.

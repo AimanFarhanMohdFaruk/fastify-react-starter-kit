@@ -1,9 +1,8 @@
 import { useRouteContext } from '@fastify/react/client'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { AdminIndexData } from '@app/controllers/admin/loaders'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
-
-type Data = { forbidden?: boolean }
 
 export async function getData(ctx: { req: FastifyRequest; reply: FastifyReply }) {
   const { loadAdminIndexPage } = await import('@app/controllers/admin/loaders')
@@ -15,7 +14,7 @@ export function getMeta() {
 }
 
 export default function AdminIndexPage() {
-  const { data } = useRouteContext() as { data: Data }
-  if (data.forbidden) return <AdminForbidden />
+  const { data } = useRouteContext() as { data: AdminIndexData }
+  if ('forbidden' in data && data.forbidden) return <AdminForbidden />
   return null
 }

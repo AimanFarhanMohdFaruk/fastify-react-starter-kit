@@ -1,16 +1,15 @@
 import { useRouteContext } from '@fastify/react/client'
-import type { FastifyRequest } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { HomePageData } from '@app/controllers/home/loaders'
 
 import { HomeScreen } from '@/components/screen/home/home'
 
-type HomeData = {
-  email: string | null
-  isAdmin: boolean
-}
-
-export async function getData(ctx: { req: FastifyRequest }) {
+export async function getData(ctx: {
+  req: FastifyRequest
+  reply: FastifyReply
+}) {
   const { loadHomePage } = await import('@app/controllers/home/loaders')
-  return loadHomePage(ctx.req)
+  return loadHomePage(ctx.req, ctx.reply)
 }
 
 export function getMeta() {
@@ -18,6 +17,6 @@ export function getMeta() {
 }
 
 export default function HomePage() {
-  const { data } = useRouteContext() as { data: HomeData }
+  const { data } = useRouteContext() as { data: HomePageData }
   return <HomeScreen email={data.email} isAdmin={data.isAdmin} />
 }

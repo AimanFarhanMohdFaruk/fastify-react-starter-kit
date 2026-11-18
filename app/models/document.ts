@@ -1,6 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { db } from '../db'
+import { ValidationError } from '../errors'
 import { documents, type Document } from './schema'
 
 export type CreateDocumentInput = {
@@ -16,10 +17,10 @@ export type CreateDocumentInput = {
 
 export async function createDocument(input: CreateDocumentInput): Promise<Document> {
   const filename = input.filename.trim()
-  if (!filename) throw new Error('Filename required')
-  if (!input.key.trim()) throw new Error('Object key required')
+  if (!filename) throw new ValidationError('Filename required')
+  if (!input.key.trim()) throw new ValidationError('Object key required')
   if (!Number.isFinite(input.byteSize) || input.byteSize < 0) {
-    throw new Error('byteSize must be a non-negative number')
+    throw new ValidationError('byteSize must be a non-negative number')
   }
 
   const id = randomUUID()

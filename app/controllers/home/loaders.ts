@@ -1,19 +1,22 @@
 /**
  * Home page loader — optional session for chrome (email / admin).
  */
-import type { FastifyRequest } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import { isAdmin } from '../../models/admin'
-import { getSessionUser } from '../auth'
+import { gatePage } from '../page-gate'
 
 export type HomePageData = {
   email: string | null
   isAdmin: boolean
 }
 
-export async function loadHomePage(req: FastifyRequest): Promise<HomePageData> {
-  const user = await getSessionUser(req)
+export async function loadHomePage(
+  req: FastifyRequest,
+  reply: FastifyReply,
+): Promise<HomePageData> {
+  const gate = await gatePage(req, reply, 'public')
   return {
-    email: user?.email ?? null,
-    isAdmin: user ? isAdmin(user) : false,
+    email: gate.user?.email ?? null,
+    isAdmin: gate.user ? isAdmin(gate.user) : false,
   }
 }

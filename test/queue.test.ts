@@ -6,7 +6,13 @@ import {
   type ObjectStore,
   type PutObjectInput,
 } from '../app/object-store'
-import { isJobName, runJob } from '../app/queue'
+import {
+  createInlineAdapter,
+  enqueue,
+  isJobName,
+  runJob,
+  setQueueAdapter,
+} from '../app/queue'
 import { createSessionUser } from './harness/auth'
 import { truncateAppTables } from './harness/db'
 
@@ -49,9 +55,11 @@ function memoryStore(): ObjectStore {
 describe('queue handlers', () => {
   beforeEach(async () => {
     await truncateAppTables()
+    setQueueAdapter(createInlineAdapter())
   })
 
   afterEach(() => {
+    setQueueAdapter(null)
     setObjectStoreForTests(null)
   })
 
@@ -64,6 +72,14 @@ describe('queue handlers', () => {
   test('runJob shout returns shouted message', async () => {
     const result = await runJob('shout', { message: 'ping' })
     assert.deepEqual(result, { shouted: 'ping' })
+  })
+
+  test('enqueue via inline adapter runs shout and records', async () => {
+    const adapter = createInlineAdapter()
+    setQueueAdapter(adapter)
+    await enqueue('shout', { message: 'bus' })
+    assert.equal(adapter.recording.length, 1)
+    assert.equal(adapter.recording[0].name, 'shout')
   })
 
   test('runJob parse_document marks document ready', async () => {
@@ -85,6 +101,7 @@ describe('queue handlers', () => {
     })
 
     const result = await runJob('parse_document', { documentId: doc.id })
+    assert.ok(result && 'status' in result)
     assert.equal(result.status, 'ready')
     assert.equal(result.extractedText, 'from-job')
   })

@@ -44,7 +44,7 @@ Fastify’s official [Testing guide](https://github.com/fastify/fastify/blob/mai
 - Example uses **`node:test`** + `t.assert.strictEqual`.
 - Recommends **`t.after(() => app.close())`** so external connections close.
 
-For this kit: extract or duplicate a **minimal app builder** used by tests that registers the same controllers as `cmd/web/main.ts` **without** `FastifyVite` when only `/api` is under test. Full HTML/SSR stays in the Playwright lane.
+For this kit: `test/harness/app.ts` → `composeWebApp` from `app/config.ts` **without** Vite when only `/api` is under test. Full HTML/SSR stays in the Playwright lane.
 
 ## Assert
 

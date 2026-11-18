@@ -32,7 +32,7 @@ Dependency rule: **inward only**. Models never import controllers, queue, or `cl
 ```
 client/pages  ──getData──►  controllers/<area>/loaders ──► models | services | *Dto
 client/screen ──fetch────►  /api ──► controllers ──► models | services | enqueue
-cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► services (optional models)
+cmd/worker    ──dequeue──►  app/queue/ (registerWorkers → adapter.work) ──► services (optional models)
 ```
 
 | Layer | Path | Owns |
@@ -41,7 +41,7 @@ cmd/worker    ──dequeue──►  app/queue.ts (registerWorkers) ──► s
 | **Services** | `app/services/` | Cross-model or external side effect; upload policy; job bodies called from `queue` handlers |
 | **API controllers** | `app/controllers/<resource>/` | Fluent `index.ts` + handlers + dto; `requireSession` on private routes → parse → one model/service → `*Dto` JSON |
 | **Page loaders** | `app/controllers/<area>/loaders.ts` | Gate + query + `*Dto` for SSR; page `getData` imports **one** `load*Page` |
-| **Queue** | `app/queue.ts` | Stupid bus: `handlers` registry, typed `enqueue`, `getBoss`, `registerWorkers` |
+| **Queue** | `app/queue/` | Stupid bus: `handlers`, typed `enqueue`, adapters (pg-boss / inline), `registerWorkers` |
 | **Web composition** | `app/config.ts` | `composeWebApp` — plugins + `/api` registration + optional Vite; used by `cmd/web` and `test/harness` |
 | **Views** | `client/pages/` + `client/components/screen/` | Thin route modules + presentation |
 
@@ -77,16 +77,17 @@ Typical controller: `requireSession` on the route → parse → one model or ser
 
 Resource JSON for Post / Document is shaped once in `app/controllers/<resource>/dto.ts`. Both `/api` handlers and page **loaders** call those helpers; `client/lib/api.ts` re-exports the DTO types for screens.
 
-Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits, UI accept, and handler status mapping import from there.
+Document upload policy (`DOCUMENT_MAX_BYTES`, `DOCUMENT_ACCEPT`, typed `UploadDocumentError`) lives in `app/services/upload-document.ts` — multipart limits and UI accept import from there. HTTP status for `AppError` (including `UploadDocumentError`) is mapped once in `composeWebApp` `setErrorHandler` (`app/errors.ts`).
 
 ## Queue path (stupid bus)
 
 The queue is **not** coupled to a domain table. pg-boss holds delivery state (like Redis in Sidekiq); you do not model `pgboss.*`.
 
-1. Caller `enqueue(name, args)` via `app/queue.ts` (e.g. from `POST /api/work`, or `uploadDocument` → `parse_document`).
-2. Worker process calls `registerWorkers()` — one `boss.work` on `default`.
-3. Looks up `handlers[name]` and calls the service with `args`.
-4. Service may touch models if the product needs it — **not required** to enqueue.
+1. Caller `enqueue(name, args)` via `app/queue/` (e.g. from `POST /api/work`, or `uploadDocument` → `parse_document`).
+2. `enqueue` → `QueueAdapter.send` (pg-boss in prod; inline in tests via `setQueueAdapter`).
+3. Worker process calls `registerWorkers()` → adapter `work()` (pg-boss consumer on `default`).
+4. Looks up `handlers[name]` and calls the service with `args`.
+5. Service may touch models if the product needs it — **not required** to enqueue.
 
 Demo: `shout` sleeps + logs (no row). Upload enqueues `parse_document` so PDF/text extract does not block the web request.
 
@@ -114,9 +115,9 @@ Better Auth lives in `app/models/auth` (schema + server instance). The web proce
 
 | Need | Use |
 |------|-----|
-| Session (in loaders) | `getSessionUser(req)` (null when banned) |
+| Session (in loaders) | `gatePage` → `gate.user` (banned users are null via `getSessionUser`) |
 | Admin flag / authz | `isAdmin(user)` — never `role === 'admin'` |
-| Gate `/admin/**` | `loadAdmin*Page` → `gateAdminPage` (check `{ ok }`, not truthiness) |
+| Gate pages | `gatePage(req, reply, 'public'\|'signedIn'\|'guestOnly'\|'admin')` — check `{ ok }`, return `gate.data` on deny |
 | Page SSR data | `getData` → one `load*Page` from `controllers/<area>/loaders.ts` |
 | Private `/api` | `requireSession` preHandler; `sessionUser(req)` in handlers |
 
