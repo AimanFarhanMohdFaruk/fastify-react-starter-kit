@@ -14,7 +14,7 @@ import { gatePage } from '../page-gate'
 import { postDto, type PostDto } from '../posts/dto'
 
 export type DashboardPageData =
-  | Record<string, never>
+  | { redirectTo: string }
   | {
       email: string
       isAdmin: boolean

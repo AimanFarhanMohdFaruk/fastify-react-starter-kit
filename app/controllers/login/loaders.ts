@@ -4,7 +4,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { gatePage } from '../page-gate'
 
-export type LoginPageData = Record<string, never>
+export type LoginPageData = { redirectTo: string } | Record<string, never>
 
 export async function loadLoginPage(
   req: FastifyRequest,

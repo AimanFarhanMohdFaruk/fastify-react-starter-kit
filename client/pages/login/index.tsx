@@ -1,6 +1,8 @@
+import { useRouteContext } from '@fastify/react/client'
 import { Link } from 'react-router'
 import { useState } from 'react'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { LoginPageData } from '@app/controllers/login/loaders'
 
 import { Container } from '@/components/layout'
 import { Main } from '@/components/shell/main'
@@ -9,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Separator } from '@/components/ui/separator'
+import { pageRedirect } from '@/lib/page-navigation'
 
 import { authClient } from '../../lib/auth-client'
 
@@ -25,12 +28,16 @@ export function getMeta() {
 }
 
 export default function Login() {
+  const { data } = useRouteContext() as { data: LoginPageData }
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [magicEmail, setMagicEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  const redirect = pageRedirect(data)
+  if (redirect) return redirect
 
   return (
     <Main className="my-0 py-12">

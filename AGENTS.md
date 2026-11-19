@@ -10,7 +10,7 @@ Rails-shaped Fastify + `@fastify/react` kit. Read these before growing features 
 - **Page loaders** — `app/controllers/<area>/loaders.ts` (`load*Page`: gate + query + `*Dto`). Page `getData` does **one** dynamic import of that loader — no multi-import `@app` / hand-maps in the page. Areas today: `admin`, `dashboard`, `home`, `login`.
 - **One JSON seam** — `dto.ts` shapes HTTP; `/api` handlers **and** page loaders call `*Dto`. DTO types via `import type` through `@/lib/api`; page data types via `import type` from the area loader.
 - **Domain errors** — throw `AppError` subclasses from `app/errors.ts` (and `UploadDocumentError`); `composeWebApp` `setErrorHandler` maps them to JSON. Handlers do not try/catch for status.
-- **Auth** — `requireSession` / `sessionUser` for private `/api`; `gatePage` (page-gate) + `isAdmin` for pages — never `role === 'admin'`.
+- **Auth** — `requireSession` / `sessionUser` for private `/api`; `gatePage` (page-gate) + `isAdmin` for pages — never `role === 'admin'`. Page loaders return JSON only (`{ redirectTo }` + client `pageRedirect` / `<Navigate>`); never `reply.redirect` in `getData` / `gatePage` (breaks `/-/data/*`).
 - **Upload policy** — limits / accept / typed errors live in the service; boot + UI + handlers import them.
 - **Queue** — stupid bus in `app/queue/`: `handlers` registry, typed `enqueue(name, args)`, `registerWorkers`. Delivery via adapter (pg-boss prod; `createInlineAdapter` + `setQueueAdapter` in tests). Do **not** require a domain row to enqueue; do **not** add `parse:'sync'` on Document intake.
 - `client/` is presentation + route modules only — no domain rules, no client-side business filter/sort.

@@ -4,6 +4,7 @@ import type { AdminUserDetailData } from '@app/controllers/admin/loaders'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
 import { AdminUserDetail } from '@/components/screen/admin/users'
+import { pageRedirect } from '@/lib/page-navigation'
 
 export async function getData(ctx: { req: FastifyRequest; reply: FastifyReply }) {
   const { loadAdminUserPage } = await import('@app/controllers/admin/loaders')
@@ -16,6 +17,8 @@ export function getMeta() {
 
 export default function AdminUserDetailPage() {
   const { data } = useRouteContext() as { data: AdminUserDetailData }
+  const redirect = pageRedirect(data)
+  if (redirect) return redirect
   if ('forbidden' in data && data.forbidden) return <AdminForbidden />
   if ('notFound' in data && data.notFound) {
     return (

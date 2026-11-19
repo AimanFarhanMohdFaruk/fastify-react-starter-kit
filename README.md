@@ -107,7 +107,7 @@ Promote an Admin after migrate:
 
 1. Sign up at `/login`
 2. `npm run admin:promote -- you@example.com`
-3. Sign in, open `/admin` (redirects to `/admin/users`)
+3. Sign in, open `/admin` (JSON `{ redirectTo }` → `/admin/users`)
 
 Stop compose services: `npm run db:down`
 

@@ -4,6 +4,7 @@ import type { AdminPostDetailData } from '@app/controllers/admin/loaders'
 
 import { AdminForbidden } from '@/components/screen/admin/admin-shell'
 import { AdminPostDetail } from '@/components/screen/admin/posts'
+import { pageRedirect } from '@/lib/page-navigation'
 
 export async function getData(ctx: {
   req: FastifyRequest
@@ -19,6 +20,8 @@ export function getMeta() {
 
 export default function AdminPostDetailPage() {
   const { data } = useRouteContext() as { data: AdminPostDetailData }
+  const redirect = pageRedirect(data)
+  if (redirect) return redirect
   if ('forbidden' in data && data.forbidden) return <AdminForbidden />
   if ('notFound' in data && data.notFound) {
     return <p className="p-8 text-muted-foreground text-sm">Post not found</p>

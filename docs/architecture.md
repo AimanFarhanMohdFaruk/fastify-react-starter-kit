@@ -53,12 +53,12 @@ Route modules live under `client/pages/` (folder → URL; home is `pages/index.t
 
 1. Browser `GET /dashboard`.
 2. `@fastify/react` runs the route’s `getData({ req, reply })` **on the server** before SSR.
-3. `getData` dynamically imports **one** page loader — e.g. `loadDashboardPage` from `app/controllers/dashboard/loaders.ts` — and returns its result (or the loader redirects).
-4. The loader owns session gate, model queries, and `*Dto` mapping. The page does not multi-import `@app` or hand-map fields.
-5. React SSR renders the default export; `useRouteContext().data` is the `getData` return value.
+3. `getData` dynamically imports **one** page loader — e.g. `loadDashboardPage` from `app/controllers/dashboard/loaders.ts` — and returns its result as **JSON data only** (including `{ redirectTo }` when the gate denies or a path bounces).
+4. The loader owns session gate, model queries, and `*Dto` mapping. The page does not multi-import `@app` or hand-map fields. **Never** `reply.redirect` in `getData` / `gatePage` / `load*Page` — that breaks client navigations on `/-/data/*`.
+5. React SSR renders the default export; `useRouteContext().data` is the `getData` return value. Pages call `pageRedirect(data)` → `<Navigate>` when `redirectTo` is set.
 6. HTML ships with hydrated route context. Client React takes over for navigation and interactivity.
 
-On **client-side** navigations, the same `getData` runs again on the server via an internal JSON endpoint (`/-/data/…`); the client does not execute model code.
+On **client-side** navigations, the same `getData` runs again on the server via an internal JSON endpoint (`/-/data/…`); the client expects a JSON body (route `data`), not an HTTP 302.
 
 Screens under `client/components/screen/` receive props from the page. They never import `@app/*`; live updates go through `fetch('/api/…')`.
 
@@ -117,7 +117,7 @@ Better Auth lives in `app/models/auth` (schema + server instance). The web proce
 |------|-----|
 | Session (in loaders) | `gatePage` → `gate.user` (banned users are null via `getSessionUser`) |
 | Admin flag / authz | `isAdmin(user)` — never `role === 'admin'` |
-| Gate pages | `gatePage(req, reply, 'public'\|'signedIn'\|'guestOnly'\|'admin')` — check `{ ok }`, return `gate.data` on deny |
+| Gate pages | `gatePage(…, policy)` — deny returns `{ redirectTo }` or `{ forbidden: true }` (403); pages `<Navigate>` via `pageRedirect` |
 | Page SSR data | `getData` → one `load*Page` from `controllers/<area>/loaders.ts` |
 | Private `/api` | `requireSession` preHandler; `sessionUser(req)` in handlers |
 

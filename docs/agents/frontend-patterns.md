@@ -58,7 +58,7 @@ client/components/screen/dashboard/dashboard.tsx  → interactive UI
 1. Runs on the server before SSR (and again via an internal JSON endpoint on client-side navigations).
 2. Return value becomes `useRouteContext().data`; the page passes it into the screen as props.
 3. **One** dynamic `import` of `load*Page` from `app/controllers/<area>/loaders.ts`. Vite stubs `app/` for the **client** bundle (`vite.app-server-only.ts`); SSR still loads the real modules. Do **not** static-import `@app/*` at the top of a page or screen; do not multi-import models/dto inside `getData`.
-4. Auth gates live in the loader via `gatePage` (`public` | `signedIn` | `guestOnly` | `admin`); `getData` stays a thin call.
+4. Auth gates live in the loader via `gatePage` (`public` | `signedIn` | `guestOnly` | `admin`); `getData` stays a thin call. Deny → `{ redirectTo }` / `{ forbidden: true }`; the page uses `pageRedirect(data)` (never `reply.redirect` — soft nav uses `/-/data/*`).
 5. Optional `getMeta()` — head tags (e.g. `{ title: '…' }`), not Fastify.
 
 ```ts
@@ -79,6 +79,7 @@ export async function getData(ctx: {
 | Page access policy       | `gatePage(req, reply, policy)` from `@app/controllers/page-gate`            |
 | Who is signed in?        | `gate.user` after a successful `gatePage` (or `getSessionUser` if needed)   |
 | Is this User an Admin?   | `isAdmin(user)` from `@app/models/admin` — never `user.role === 'admin'`    |
+| Gate deny / path bounce  | `{ redirectTo }` → `pageRedirect(data)` / `<Navigate>` (never `reply.redirect`) |
 | Gate `/admin/**`         | `loadAdmin*Page` → `gatePage(..., 'admin')`                                 |
 | Dashboard / home / login | `gatePage` with `signedIn` / `public` / `guestOnly` in area loaders         |
 | Page data types          | `import type { *PageData }` from the area loader — do not redeclare         |

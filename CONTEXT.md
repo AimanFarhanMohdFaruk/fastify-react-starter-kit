@@ -37,8 +37,8 @@ A `load*Page` function in `app/controllers/<area>/loaders.ts` that owns gate + q
 _Avoid_: Multi-importing `@app` or hand-mapping DTOs inside the page module
 
 **Page gate**:
-The SSR access policy applied by a Page loader via `gatePage` in `app/controllers/page-gate.ts` (`public` | `signedIn` | `guestOnly` | `admin`). Owns redirect / 403 side effects; loaders return `gate.data` on deny. Not used for `/api` (that stays `requireSession`).
-_Avoid_: Copying `getSessionUser` + `reply.redirect` into each loader; `gateAdminPage` (removed)
+The SSR access policy applied by a Page loader via `gatePage` in `app/controllers/page-gate.ts` (`public` | `signedIn` | `guestOnly` | `admin`). Deny returns JSON `{ redirectTo }` (pages `<Navigate>`) or `{ forbidden: true }` with `reply.code(403)`. Never `reply.redirect` — breaks `/-/data/*`. Not used for `/api` (that stays `requireSession`).
+_Avoid_: `reply.redirect` in loaders/`gatePage`; copying `getSessionUser` into each loader; `gateAdminPage` (removed)
 
 **Domain error**:
 A typed failure thrown from a model or service (`AppError` and subclasses in `app/errors.ts`, plus `UploadDocumentError`). `composeWebApp` maps it to HTTP JSON; handlers do not catch for status.

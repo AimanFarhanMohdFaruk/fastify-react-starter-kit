@@ -103,7 +103,7 @@ const steps: WalkStep[] = [
     code: [
       { line: "const gate = await gatePage(req, reply, 'signedIn')", tone: 'kw' },
       { line: 'if (!gate.ok) return gate.data', tone: 'plain' },
-      { line: '', tone: 'muted' },
+      { line: "// { redirectTo } — never reply.redirect", tone: 'muted' },
       { line: 'return {', tone: 'fn' },
       { line: '  email: gate.user.email,', tone: 'str' },
       { line: '  posts: rows.map(postDto),', tone: 'plain' },
@@ -113,8 +113,8 @@ const steps: WalkStep[] = [
       eyebrow: 'Loader path',
       lines: [
         'getData → one load*Page',
-        'gate → query → *Dto',
-        'pages import type only',
+        'deny → { redirectTo } JSON',
+        'page → pageRedirect / Navigate',
       ],
     },
   },

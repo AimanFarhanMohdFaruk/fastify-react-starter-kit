@@ -1,6 +1,6 @@
 # Case: `getData` must not `reply.redirect`
 
-**Status:** bug in kit convention (nanti-wa hit it; kit still teaches the wrong pattern).  
+**Status:** fixed in kit (`gatePage` / loaders return `{ redirectTo }`; pages use `pageRedirect`).  
 **Applies to:** any `@fastify/react` app using page loaders + client-side navigations.
 
 ## Symptom

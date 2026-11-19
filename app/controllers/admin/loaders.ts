@@ -18,9 +18,9 @@ import {
   type AdminUserDto,
 } from './dto'
 
-type ForbiddenOrEmpty = { forbidden: true } | Record<string, never>
+type GateDenied = { forbidden: true } | { redirectTo: string }
 
-export type AdminIndexData = ForbiddenOrEmpty
+export type AdminIndexData = GateDenied
 
 export async function loadAdminIndexPage(
   req: FastifyRequest,
@@ -28,14 +28,12 @@ export async function loadAdminIndexPage(
 ): Promise<AdminIndexData> {
   const gate = await gatePage(req, reply, 'admin')
   if (!gate.ok) return gate.data
-  reply.redirect('/admin/users')
-  return {}
+  return { redirectTo: '/admin/users' }
 }
 
 export type AdminUsersListData =
-  | { forbidden: true }
+  | GateDenied
   | { users: AdminUserDto[] }
-  | Record<string, never>
 
 export async function loadAdminUsersPage(
   req: FastifyRequest,
@@ -48,10 +46,9 @@ export async function loadAdminUsersPage(
 }
 
 export type AdminUserDetailData =
-  | { forbidden: true }
+  | GateDenied
   | { notFound: true }
   | { user: AdminUserDto }
-  | Record<string, never>
 
 export async function loadAdminUserPage(
   req: FastifyRequest,
@@ -70,9 +67,8 @@ export async function loadAdminUserPage(
 }
 
 export type AdminPostsListData =
-  | { forbidden: true }
+  | GateDenied
   | { posts: AdminPostDto[] }
-  | Record<string, never>
 
 export async function loadAdminPostsPage(
   req: FastifyRequest,
@@ -85,10 +81,9 @@ export async function loadAdminPostsPage(
 }
 
 export type AdminPostDetailData =
-  | { forbidden: true }
+  | GateDenied
   | { notFound: true }
   | { post: AdminPostDto }
-  | Record<string, never>
 
 export async function loadAdminPostPage(
   req: FastifyRequest,
