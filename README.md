@@ -1,9 +1,9 @@
 <a id="readme-top"></a>
 
-[![Contributors](https://img.shields.io/badge/contributors-1-blue?style=for-the-badge&logo=github)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/graphs/contributors)
-[![Forks](https://img.shields.io/github/forks/AimanFarhanMohdFaruk/fastify-react-starter-kit?style=for-the-badge&logo=github)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/network/members)
-[![Stargazers](https://img.shields.io/github/stars/AimanFarhanMohdFaruk/fastify-react-starter-kit?style=for-the-badge&logo=github)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/stargazers)
-[![Issues](https://img.shields.io/badge/issues-welcome-blue?style=for-the-badge&logo=github)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues)
+[![Contributors](https://img.shields.io/badge/contributors-1-blue?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/AimanFarhanMohdFaruk/fastify-react-starter-kit?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/network/members)
+[![Stargazers](https://img.shields.io/github/stars/AimanFarhanMohdFaruk/fastify-react-starter-kit?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/stargazers)
+[![Issues](https://img.shields.io/badge/issues-welcome-blue?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues)
 
 
 
