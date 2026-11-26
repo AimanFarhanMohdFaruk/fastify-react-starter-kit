@@ -1,9 +1,9 @@
 <a id="readme-top"></a>
 
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
+[![Contributors](https://img.shields.io/github/contributors/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/network/members)
+[![Stargazers](https://img.shields.io/github/stars/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/stargazers)
+[![Issues](https://img.shields.io/github/issues/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues)
 
 
 
@@ -124,15 +124,15 @@ Explicitly **not** borrowed: Next App Router / RSC conventions, framework-owned 
 
 ### Built With
 
-* [![Fastify][Fastify.js]][Fastify-url]
-* [![React][React.js]][React-url]
-* [![Vite][Vite.js]][Vite-url]
-* [![TypeScript][TypeScript.js]][TypeScript-url]
-* [![Drizzle][Drizzle.js]][Drizzle-url]
-* [![Postgres][Postgres.js]][Postgres-url]
-* [![Redis][Redis.js]][Redis-url]
-* [![Tailwind CSS][Tailwind.css]][Tailwind-url]
-* [![Oxlint][Oxlint.js]][Oxlint-url]
+* [![Fastify](https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white)](https://fastify.dev/)
+* [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+* [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+* [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+* [![Drizzle](https://img.shields.io/badge/Drizzle-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black)](https://orm.drizzle.team/)
+* [![Postgres](https://img.shields.io/badge/Postgres-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+* [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+* [![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+* [![Oxlint](https://img.shields.io/badge/Oxlint-2C2255?style=for-the-badge&logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
 
 Plus: Better Auth · pg-boss · RustFS (S3) · Inbucket · Playwright · Testcontainers
 
@@ -387,32 +387,3 @@ Project Link: [https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-
-<!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge
-[contributors-url]: https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge
-[forks-url]: https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/network/members
-[stars-shield]: https://img.shields.io/github/stars/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge
-[stars-url]: https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/stargazers
-[issues-shield]: https://img.shields.io/github/issues/AimanFarhanMohdFaruk/fastify-react-starter-kit.svg?style=for-the-badge
-[issues-url]: https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues
-
-[Fastify.js]: https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white
-[Fastify-url]: https://fastify.dev/
-[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
-[React-url]: https://react.dev/
-[Vite.js]: https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white
-[Vite-url]: https://vite.dev/
-[TypeScript.js]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
-[TypeScript-url]: https://www.typescriptlang.org/
-[Drizzle.js]: https://img.shields.io/badge/Drizzle-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black
-[Drizzle-url]: https://orm.drizzle.team/
-[Postgres.js]: https://img.shields.io/badge/Postgres-4169E1?style=for-the-badge&logo=postgresql&logoColor=white
-[Postgres-url]: https://www.postgresql.org/
-[Redis.js]: https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white
-[Redis-url]: https://redis.io/
-[Tailwind.css]: https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white
-[Tailwind-url]: https://tailwindcss.com/
-[Oxlint.js]: https://img.shields.io/badge/Oxlint-2C2255?style=for-the-badge&logo=oxc&logoColor=white
-[Oxlint-url]: https://oxc.rs/docs/guide/usage/linter.html
