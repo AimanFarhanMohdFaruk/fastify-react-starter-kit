@@ -5,8 +5,6 @@
 [![Stargazers](https://img.shields.io/badge/stargazers-0-blue?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/stargazers)
 [![Issues](https://img.shields.io/badge/issues-welcome-blue?style=for-the-badge)](https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues)
 
-
-
 <div align="center">
   <h1 align="center">Fastify React starter</h1>
   <p align="center">
@@ -25,8 +23,6 @@
     <a href="https://github.com/AimanFarhanMohdFaruk/fastify-react-starter-kit/issues/new?labels=enhancement">Request Feature</a>
   </p>
 </div>
-
-
 
 <details>
   <summary>Table of Contents</summary>
