@@ -31,7 +31,6 @@ export default function Login() {
   const { data } = useRouteContext() as { data: LoginPageData }
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
   const [magicEmail, setMagicEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -104,7 +103,7 @@ export default function Login() {
                 const { error: err } = await authClient.signUp.email({
                   email,
                   password,
-                  name: name || email.split('@')[0],
+                  name: email.split('@')[0] || 'user',
                 })
                 setBusy(false)
                 if (err) {

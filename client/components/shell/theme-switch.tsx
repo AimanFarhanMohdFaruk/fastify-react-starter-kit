@@ -1,7 +1,7 @@
 'use client'
 
 import { Monitor, Moon, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
@@ -13,11 +13,18 @@ const modes = [
 	{ icon: Moon, name: 'dark' },
 ] as const
 
+/** Client-only flag without setState-in-effect (SSR-safe for next-themes). */
+function useIsClient() {
+	return useSyncExternalStore(
+		() => () => {},
+		() => true,
+		() => false,
+	)
+}
+
 export function ThemeSelector() {
 	const { setTheme, theme } = useTheme()
-	const [isMounted, setIsMounted] = useState(false)
-
-	useEffect(() => setIsMounted(true), [])
+	const isMounted = useIsClient()
 
 	return (
 		<ToggleGroup
